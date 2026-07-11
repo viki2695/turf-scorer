@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Turf Cricket Scorer</title>
+  <meta name="description" content="A modern, offline-capable cricket scorer for turf cricket. Easily track runs, customize rules, and share day summaries.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#10b981">
+  <!-- Modern premium font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Skip link for keyboard navigability -->
+  <a href="#main-content" class="skip-link visually-hidden">Skip to main content</a>
+
+  <!-- Header Section -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="logo-area">
+        <span class="logo-icon" aria-hidden="true">🏏</span>
+        <h1>Turf Cricket Scorer</h1>
+      </div>
+      <div class="header-actions">
+        <button id="theme-toggle" class="btn-icon" aria-label="Toggle dark/light theme" type="button">
+          <span class="theme-icon-dark" aria-hidden="true">🌙</span>
+          <span class="theme-icon-light" aria-hidden="true">☀️</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Landmark -->
+  <main id="main-content" tabindex="-1">
+    
+    <!-- Screen 1: Start/Setup Screen -->
+    <section id="screen-setup" class="screen active" aria-labelledby="setup-title">
+      <div class="container-small">
+        <h2 id="setup-title" class="screen-title">Setup Tournament Day</h2>
+        <p class="screen-subtitle">Create a session for your turf cricket day. You can play and score multiple matches.</p>
+
+        <form id="form-setup">
+          <!-- Day Name Group -->
+          <div class="form-group">
+            <label for="day-name">Session Name (e.g., Saturday Turf Cup)</label>
+            <input type="text" id="day-name" required placeholder="e.g. Saturday Evening Turf Session" autocomplete="off">
+          </div>
+
+          <!-- Team Names -->
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="default-team-a">Default Team A Name</label>
+              <input type="text" id="default-team-a" value="Team Alpha" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="default-team-b">Default Team B Name</label>
+              <input type="text" id="default-team-b" value="Team Bravo" autocomplete="off">
+            </div>
+          </div>
+
+          <!-- Match Basic Settings -->
+          <fieldset class="form-fieldset">
+            <legend>Match Structure</legend>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="overs-per-match">Overs per Innings</label>
+                <input type="number" id="overs-per-match" value="6" min="1" max="50" required>
+              </div>
+              <div class="form-group">
+                <label for="wickets-per-innings">Wickets per Innings</label>
+                <input type="number" id="wickets-per-innings" value="10" min="1" max="11" required>
+              </div>
+            </div>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="max-overs-per-bowler">Max Overs per Bowler</label>
+                <input type="number" id="max-overs-per-bowler" value="2" min="1" max="50" required>
+              </div>
+              <div class="form-group">
+                <label for="batsman-retire-runs">Retire Batsman at Runs (Optional)</label>
+                <input type="number" id="batsman-retire-runs" placeholder="No limit" min="1">
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Custom Turf Rules Customization -->
+          <fieldset class="form-fieldset">
+            <legend>Custom Rules Configuration</legend>
+            
+            <div class="rules-flex">
+              <div class="form-group">
+                <label for="wide-value">Wide Ball Run Value</label>
+                <select id="wide-value">
+                  <option value="1" selected>1 Run</option>
+                  <option value="2">2 Runs</option>
+                  <option value="0">0 Runs (No Runs)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="noball-value">No Ball Run Value</label>
+                <select id="noball-value">
+                  <option value="1" selected>1 Run</option>
+                  <option value="2">2 Runs</option>
+                  <option value="0">0 Runs (No Runs)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="wide-rebowl" checked>
+                <span>Re-bowl Wide Balls</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="noball-rebowl" checked>
+                <span>Re-bowl No Balls</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="byes-allowed" checked>
+                <span>Allow Byes & Leg Byes</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <button type="submit" class="btn-primary btn-block">Start Scoring Session</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Screen 2: Tournament Day Dashboard -->
+    <section id="screen-dashboard" class="screen" aria-labelledby="dashboard-title">
+      <div class="container-medium">
+        <div class="dashboard-header">
+          <div>
+            <h2 id="dashboard-title" class="screen-title">Tournament Dashboard</h2>
+            <p id="dashboard-day-subtitle" class="screen-subtitle">Session Details</p>
+          </div>
+          <div class="dashboard-actions">
+            <button id="btn-share-day" class="btn-secondary" type="button">
+              <span class="btn-icon-label">📤</span> Share Day Summary
+            </button>
+            <button id="btn-start-match" class="btn-primary" type="button">
+              <span>➕</span> New Match
+            </button>
+          </div>
+        </div>
+
+        <!-- Standings / Analytics Summary -->
+        <div class="summary-cards">
+          <div class="card glass">
+            <h3>Matches Played</h3>
+            <div id="stat-matches-count" class="stat-value">0</div>
+          </div>
+          <div class="card glass">
+            <h3>Top Performing Team</h3>
+            <div id="stat-top-team" class="stat-value">-</div>
+          </div>
+          <div class="card glass">
+            <h3>Total Runs Scored</h3>
+            <div id="stat-total-runs" class="stat-value">0</div>
+          </div>
+        </div>
+
+        <!-- Teams Record table -->
+        <section class="dashboard-section glass">
+          <h3>Team Standings</h3>
+          <div class="table-container">
+            <table class="data-table">
+              <caption>Summary of team performance today</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Team</th>
+                  <th scope="col">Played</th>
+                  <th scope="col">Won</th>
+                  <th scope="col">Lost</th>
+                  <th scope="col">Win %</th>
+                </tr>
+              </thead>
+              <tbody id="standings-table-body">
+                <!-- Injected via JavaScript -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Match List -->
+        <section class="dashboard-section">
+          <h3>Today's Matches</h3>
+          <div id="match-list" class="match-list-container">
+            <!-- Injected via JavaScript -->
+            <p class="empty-state">No matches played yet. Click "New Match" to start!</p>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- Screen 3: New Match Settings Popup/Screen (if starting from dashboard) -->
+    <section id="screen-match-setup" class="screen" aria-labelledby="match-setup-title">
+      <div class="container-small">
+        <h2 id="match-setup-title" class="screen-title">Configure Match</h2>
+        <p class="screen-subtitle">Select teams and toss results for the next match.</p>
+
+        <form id="form-match-setup">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="match-team-a">Batting Team (Team A)</label>
+              <input type="text" id="match-team-a" required placeholder="Team A" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="match-team-b">Bowling Team (Team B)</label>
+              <input type="text" id="match-team-b" required placeholder="Team B" autocomplete="off">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="toss-winner">Who won the toss?</label>
+            <select id="toss-winner">
+              <option value="batting">Batting Team (Team A)</option>
+              <option value="bowling">Bowling Team (Team B)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="toss-decision">Toss Decision</label>
+            <select id="toss-decision">
+              <option value="bat">Bat First</option>
+              <option value="bowl">Bowl First</option>
+            </select>
+          </div>
+
+          <div class="btn-group">
+            <button type="button" id="btn-cancel-match-setup" class="btn-secondary">Cancel</button>
+            <button type="submit" class="btn-primary">Start Match</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- Screen 4: Active Scoring Screen -->
+    <section id="screen-scoring" class="screen" aria-labelledby="scoring-title">
+      <h2 id="scoring-title" class="visually-hidden">Live Cricket Scoring Board</h2>
+      <div class="scoring-layout">
+        
+        <!-- Top Board Status Info -->
+        <div class="score-board glass">
+          <div class="scoreboard-main">
+            <div class="team-innings-info">
+              <div id="live-batting-team" class="batting-team-name">Team Batting</div>
+              <div class="innings-label">Innings <span id="live-innings-num">1</span></div>
+            </div>
+            <div class="score-display">
+              <span id="live-runs" class="runs-highlight">0</span>
+              <span class="separator">/</span>
+              <span id="live-wickets" class="wickets-highlight">0</span>
+            </div>
+            <div class="overs-display">
+              <span id="live-overs" class="overs-value">0.0</span>
+              <span class="overs-label">Ovs</span>
+            </div>
+          </div>
+
+          <div class="scoreboard-footer">
+            <div class="runrate-info">
+              <span>CRR: <strong id="live-crr">0.00</strong></span>
+              <span id="live-target-container" class="hidden">Target: <strong id="live-target">-</strong> | RRR: <strong id="live-rrr">0.00</strong></span>
+            </div>
+            <div id="live-match-equation" class="match-equation">
+              Batting first
+            </div>
+          </div>
+        </div>
+
+        <!-- Middle Section: Batsman & Bowler Stats -->
+        <div class="players-stats-section">
+          <!-- Batsmen Card -->
+          <div class="card-stats glass">
+            <div class="card-stats-header">
+              <span>Batter</span>
+              <span>R (B)</span>
+              <span>4s</span>
+              <span>6s</span>
+              <span>SR</span>
+            </div>
+            <div id="batter-striker-row" class="player-row active-striker">
+              <span class="player-name"><span class="striker-dot">★</span> <span id="striker-name">Striker</span></span>
+              <span class="player-runs"><strong id="striker-runs">0</strong><span class="balls-bracket">(<span id="striker-balls">0</span>)</span></span>
+              <span id="striker-fours" class="stat-num">0</span>
+              <span id="striker-sixes" class="stat-num">0</span>
+              <span id="striker-sr" class="stat-num">0.0</span>
+            </div>
+            <div id="batter-nonstriker-row" class="player-row">
+              <span class="player-name"><span class="striker-dot"></span> <span id="nonstriker-name">Non-Striker</span></span>
+              <span class="player-runs"><strong id="nonstriker-runs">0</strong><span class="balls-bracket">(<span id="nonstriker-balls">0</span>)</span></span>
+              <span id="nonstriker-fours" class="stat-num">0</span>
+              <span id="nonstriker-sixes" class="stat-num">0</span>
+              <span id="nonstriker-sr" class="stat-num">0.0</span>
+            </div>
+          </div>
+
+          <!-- Bowler Card -->
+          <div class="card-stats glass">
+            <div class="card-stats-header">
+              <span>Bowler</span>
+              <span>O</span>
+              <span>M</span>
+              <span>R</span>
+              <span>W</span>
+              <span>Econ</span>
+            </div>
+            <div id="bowler-active-row" class="player-row active-bowler">
+              <span id="bowler-name" class="player-name">Bowler</span>
+              <span id="bowler-overs" class="stat-num">0.0</span>
+              <span id="bowler-maidens" class="stat-num">0</span>
+              <span id="bowler-runs" class="stat-num">0</span>
+              <span id="bowler-wickets" class="stat-num">0</span>
+              <span id="bowler-econ" class="stat-num">0.0</span>
+            </div>
+            <div class="over-balls-container">
+              <span class="over-balls-label">This Over:</span>
+              <div id="over-balls-list" class="over-balls-list">
+                <!-- e.g. <span class="ball-badge">1</span> -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Partnership & Extras Info -->
+        <div class="extra-partnership-bar glass">
+          <div>Partnership: <strong id="live-partnership">0</strong> runs off <strong id="live-partnership-balls">0</strong> balls</div>
+          <div>Extras: <strong id="live-extras-total">0</strong> (Wd: <span id="live-extras-wd">0</span>, Nb: <span id="live-extras-nb">0</span>, By: <span id="live-extras-by">0</span>, Lb: <span id="live-extras-lb">0</span>)</div>
+        </div>
+
+        <!-- Lower Section: Tap Scorer Controls -->
+        <div class="scoring-controls">
+          
+          <!-- Run Buttons -->
+          <div class="control-row run-buttons">
+            <button class="btn-score btn-run" data-value="0" type="button">0</button>
+            <button class="btn-score btn-run" data-value="1" type="button">1</button>
+            <button class="btn-score btn-run" data-value="2" type="button">2</button>
+            <button class="btn-score btn-run" data-value="3" type="button">3</button>
+            <button class="btn-score btn-run" data-value="4" type="button">4</button>
+            <button class="btn-score btn-run" data-value="6" type="button">6</button>
+          </div>
+
+          <!-- Extras Buttons -->
+          <div class="control-row extras-buttons">
+            <button class="btn-score btn-extra" id="btn-wd" type="button">Wide</button>
+            <button class="btn-score btn-extra" id="btn-nb" type="button">No Ball</button>
+            <button class="btn-score btn-extra" id="btn-by" type="button">Bye</button>
+            <button class="btn-score btn-extra" id="btn-lb" type="button">Leg Bye</button>
+          </div>
+
+          <!-- Special Action Buttons (Wicket, Strike-rotation, Undo) -->
+          <div class="control-row actions-buttons">
+            <button class="btn-score btn-wicket" id="btn-wicket-trigger" type="button">Wicket</button>
+            <button class="btn-score btn-action" id="btn-rotate-strike" type="button">Swap Strike</button>
+            <button class="btn-score btn-action" id="btn-retire-batter" type="button">Retire Batter</button>
+            <button class="btn-score btn-undo" id="btn-undo-trigger" type="button">Undo</button>
+          </div>
+        </div>
+
+        <!-- Match Options (End Match prematurely / edit rules) -->
+        <div class="scoring-footer">
+          <button id="btn-end-match-early" class="btn-danger" type="button">End Match / Forfeit</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Screen 5: Match Summary / Completion Screen -->
+    <section id="screen-match-summary" class="screen" aria-labelledby="summary-screen-title">
+      <div class="container-medium">
+        <h2 id="summary-screen-title" class="screen-title text-center">Match Completed</h2>
+        <div id="match-victory-banner" class="victory-banner">
+          Team A won by 4 Wickets!
+        </div>
+
+        <!-- Summary Scorecards Tabs/Layout -->
+        <div class="summary-details glass">
+          <div class="summary-score-header">
+            <div class="summary-score-box">
+              <h3 id="summary-team-a-name">Team A</h3>
+              <div id="summary-team-a-score" class="summary-score-text">0/0 (0 Ovs)</div>
+            </div>
+            <div class="vs-divider">VS</div>
+            <div class="summary-score-box">
+              <h3 id="summary-team-b-name">Team B</h3>
+              <div id="summary-team-b-score" class="summary-score-text">0/0 (0 Ovs)</div>
+            </div>
+          </div>
+
+          <!-- Share card preview container -->
+          <section class="share-card-container">
+            <h3>Shareable Card Preview</h3>
+            <div id="shareable-visual-card" class="visual-card-preview">
+              <!-- Dynamically rendered visual details -->
+              <div class="card-logo">🏏 Turf Cricket</div>
+              <div id="card-match-title" class="card-match-title">Team Alpha vs Team Bravo</div>
+              <div id="card-victory-msg" class="card-victory-msg">Team Alpha won by 10 runs</div>
+              
+              <div class="card-scores-row">
+                <div class="card-team-score">
+                  <span id="card-team1-name">ALPHA</span>
+                  <strong id="card-team1-runs">72/4</strong>
+                  <span id="card-team1-overs">6.0 Ovs</span>
+                </div>
+                <div class="card-score-vs">vs</div>
+                <div class="card-team-score">
+                  <span id="card-team2-name">BRAVO</span>
+                  <strong id="card-team2-runs">62/6</strong>
+                  <span id="card-team2-overs">6.0 Ovs</span>
+                </div>
+              </div>
+
+              <div class="card-performers">
+                <div class="card-section-title">TOP PERFORMERS</div>
+                <div class="performers-flex">
+                  <div>
+                    <span class="label">Batting:</span>
+                    <span id="card-best-bat">-</span>
+                  </div>
+                  <div>
+                    <span class="label">Bowling:</span>
+                    <span id="card-best-bowl">-</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="card-footer">Scored on Turf Cricket App</div>
+            </div>
+          </section>
+
+          <!-- Sharing actions -->
+          <div class="sharing-actions-grid">
+            <button id="btn-share-whatsapp" class="btn-primary">
+              💬 Share on WhatsApp
+            </button>
+            <button id="btn-copy-text" class="btn-secondary">
+              📋 Copy Text Scorecard
+            </button>
+            <button id="btn-download-image" class="btn-secondary">
+              🖼️ Download Scorecard Image
+            </button>
+          </div>
+        </div>
+
+        <div class="text-center mt-6">
+          <button id="btn-back-dashboard" class="btn-primary" type="button">Back to Dashboard</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Accessibility Announcer for Live Regions -->
+  <div id="a11y-announcer" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- DIALOG 1: Setup Striker/Non-Striker or Batter Names on Match Start -->
+  <dialog id="dialog-select-batters" class="glass-dialog">
+    <form method="dialog" class="dialog-form">
+      <h3>Select Openers</h3>
+      <p class="dialog-hint">Enter the names of the opening batters for the innings.</p>
+      
+      <div class="form-group">
+        <label for="input-opener-striker">Striker Name</label>
+        <input type="text" id="input-opener-striker" required placeholder="Striker" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="input-opener-nonstriker">Non-Striker Name</label>
+        <input type="text" id="input-opener-nonstriker" required placeholder="Non-Striker" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label for="input-opener-bowler">Opening Bowler Name</label>
+        <input type="text" id="input-opener-bowler" required placeholder="Bowler" autocomplete="off">
+      </div>
+
+      <div class="dialog-actions">
+        <button type="submit" class="btn-primary">Start Innings</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- DIALOG 2: Bowler Selection (End of Over) -->
+  <dialog id="dialog-select-bowler" class="glass-dialog">
+    <form method="dialog" class="dialog-form">
+      <h3>Select New Bowler</h3>
+      <p class="dialog-hint">Over completed! Enter the name of the next bowler.</p>
+      
+      <div class="form-group">
+        <label for="input-next-bowler">Bowler Name</label>
+        <input type="text" id="input-next-bowler" required placeholder="e.g. Rahul" autocomplete="off">
+      </div>
+
+      <div class="dialog-actions">
+        <button type="submit" class="btn-primary">Confirm Bowler</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- DIALOG 3: Wicket Picker Details -->
+  <dialog id="dialog-wicket-picker" class="glass-dialog">
+    <form method="dialog" class="dialog-form">
+      <h3>How did the Wicket Fall?</h3>
+      
+      <div class="form-group">
+        <label for="wicket-type">Wicket Type</label>
+        <select id="wicket-type">
+          <option value="Bowled">Bowled</option>
+          <option value="Caught">Caught</option>
+          <option value="Run Out">Run Out</option>
+          <option value="LBW">LBW</option>
+          <option value="Stumped">Stumped</option>
+          <option value="Hit Wicket">Hit Wicket</option>
+          <option value="Retired Hurt">Retired Hurt</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="wicket-batter-out">Batter Dismissed</label>
+        <select id="wicket-batter-out">
+          <!-- Striker / Non-Striker populated dynamically -->
+        </select>
+      </div>
+
+      <!-- Helper fields for run out -->
+      <div class="form-group id-runout-fielder hidden">
+        <label for="input-fielder-name">Fielder Name (Optional)</label>
+        <input type="text" id="input-fielder-name" placeholder="Fielder Name" autocomplete="off">
+      </div>
+
+      <div class="form-group" id="group-next-batter">
+        <label for="input-next-batter">New Batter Name</label>
+        <input type="text" id="input-next-batter" placeholder="New Batter" autocomplete="off">
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" id="btn-cancel-wicket" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">Record Wicket</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- DIALOG 4: Retire Batter Dialog -->
+  <dialog id="dialog-retire-batter" class="glass-dialog">
+    <form method="dialog" class="dialog-form">
+      <h3>Retire Batter</h3>
+      <p class="dialog-hint">Select which batter will retire and who will replace them.</p>
+
+      <div class="form-group">
+        <label for="retire-batter-select">Batter to Retire</label>
+        <select id="retire-batter-select">
+          <!-- Striker / Non-Striker populated dynamically -->
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="input-retire-next-batter">New Batter Name</label>
+        <input type="text" id="input-retire-next-batter" required placeholder="New Batter" autocomplete="off">
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" id="btn-cancel-retire" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">Confirm Retirement</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p>&copy; 2026 Turf Cricket Scorer. Highly Accessible & Modern scoring app.</p>
+    </div>
+  </footer>
+
+  <!-- Include App Logic -->
+  <script src="app.js"></script>
+</body>
+</html>

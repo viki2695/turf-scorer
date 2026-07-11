@@ -1,0 +1,1165 @@
+/* ==========================================================================
+   CSS Design System - Turf Cricket Scorer
+   ========================================================================== */
+
+/* Font & Core CSS Variables */
+:root {
+  /* Color Palette (Emerald / Dark Slate theme) */
+  --primary-hue: 162;
+  --primary-sat: 72%;
+  --primary-light: 41%;
+  
+  --primary: hsl(var(--primary-hue), var(--primary-sat), var(--primary-light));
+  --primary-hover: hsl(var(--primary-hue), var(--primary-sat), calc(var(--primary-light) - 8%));
+  --primary-glow: hsla(var(--primary-hue), var(--primary-sat), var(--primary-light), 0.25);
+  
+  /* Dark Mode Default values */
+  --bg-color: #0b0f19;
+  --bg-surface: #151d30;
+  --bg-surface-glass: rgba(21, 29, 48, 0.7);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color-focus: var(--primary);
+  
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  
+  --error: #ef4444;
+  --error-bg: rgba(239, 68, 68, 0.1);
+  --warning: #f59e0b;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  
+  --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  
+  color-scheme: dark;
+}
+
+/* Light Mode Overrides */
+body.light-mode {
+  --bg-color: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-surface-glass: rgba(255, 255, 255, 0.8);
+  --border-color: rgba(15, 23, 42, 0.08);
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  --error-bg: rgba(239, 68, 68, 0.08);
+  
+  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 2px 4px -1px rgba(15, 23, 42, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  
+  color-scheme: light;
+}
+
+/* Reset & Base Elements */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-color);
+  color: var(--text-primary);
+  line-height: 1.5;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography styling */
+h1, h2, h3, h4 {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* Accessibility Visually Hidden utility */
+.visually-hidden:where(:not(:focus-within, :active)) {
+  position: absolute !important;
+  clip-path: inset(50%) !important;
+  overflow: hidden !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* Skip link styled for visibility on focus */
+.skip-link {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  background-color: var(--primary);
+  color: #ffffff;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-weight: 500;
+  box-shadow: var(--shadow-lg);
+}
+
+/* Layout Containers */
+.container-small {
+  max-width: 540px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.container-medium {
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+/* Header & Logo styling */
+.app-header {
+  background-color: var(--bg-surface-glass);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-icon {
+  font-size: 1.75rem;
+}
+
+.logo-area h1 {
+  font-size: 1.25rem;
+  color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+/* Screens control */
+.screen {
+  display: none;
+  flex: 1;
+  width: 100%;
+}
+
+.screen.active {
+  display: block;
+}
+
+/* App Main Container Layout */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Forms & Fields Styles */
+.screen-title {
+  font-size: 1.75rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.screen-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-family: var(--font-main);
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 480px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+.form-fieldset {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.01);
+}
+
+.form-fieldset legend {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary);
+  padding: 0 0.5rem;
+}
+
+.rules-flex {
+  display: flex;
+  gap: 1rem;
+}
+
+.rules-flex > * {
+  flex: 1;
+}
+
+.checkbox-group {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 1.2rem;
+  height: 1.2rem;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* Glassmorphism Cards */
+.glass {
+  background-color: var(--bg-surface-glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.card {
+  padding: 1.25rem;
+}
+
+/* Buttons System */
+button {
+  cursor: pointer;
+  border: none;
+  font-family: var(--font-main);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button:active {
+  transform: scale(0.96);
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: #ffffff;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover, .btn-primary:focus-visible {
+  background-color: var(--primary-hover);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.btn-secondary {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 1rem;
+}
+
+.btn-secondary:hover, .btn-secondary:focus-visible {
+  border-color: var(--text-secondary);
+  outline: none;
+}
+
+.btn-danger {
+  background-color: var(--error-bg);
+  border: 1px solid var(--error);
+  color: var(--error);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.btn-danger:hover, .btn-danger:focus-visible {
+  background-color: var(--error);
+  color: #ffffff;
+  outline: none;
+}
+
+.btn-block {
+  display: flex;
+  width: 100%;
+}
+
+.btn-icon {
+  background: none;
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+}
+
+.btn-icon:hover {
+  background-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+/* Theme Icons Toggle */
+.theme-icon-light {
+  display: none;
+}
+
+body.light-mode .theme-icon-dark {
+  display: none;
+}
+
+body.light-mode .theme-icon-light {
+  display: block;
+}
+
+.btn-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.btn-group > * {
+  flex: 1;
+}
+
+/* Dashboard UI */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  gap: 1rem;
+}
+
+@media (max-width: 600px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dashboard-actions {
+    display: flex;
+    width: 100%;
+    gap: 0.5rem;
+  }
+  .dashboard-actions > button {
+    flex: 1;
+  }
+}
+
+.dashboard-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.summary-cards .card h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.dashboard-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+}
+
+.dashboard-section h3 {
+  font-size: 1.15rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+/* Data Tables */
+.table-container {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.data-table th, .data-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.data-table th {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.data-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Match Items list in Dashboard */
+.match-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.match-item {
+  padding: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+}
+
+.match-item:hover {
+  border-color: var(--text-secondary);
+}
+
+.match-item-teams {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.match-item-result {
+  font-size: 0.85rem;
+  color: var(--primary);
+}
+
+.match-item-scores {
+  text-align: right;
+}
+
+.match-score-runs {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.match-score-overs {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--text-muted);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+/* Scoring Layout Screen */
+.scoring-layout {
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.score-board {
+  padding: 1.25rem;
+  background: linear-gradient(135deg, var(--bg-surface) 0%, rgba(16, 185, 129, 0.08) 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.scoreboard-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.team-innings-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.batting-team-name {
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.innings-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.score-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.runs-highlight {
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.separator {
+  font-size: 2rem;
+  font-weight: 300;
+  color: var(--text-muted);
+  margin: 0 0.25rem;
+}
+
+.wickets-highlight {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.overs-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.overs-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.overs-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.scoreboard-footer {
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.match-equation {
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* Stats Section cards */
+.players-stats-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 580px) {
+  .players-stats-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card-stats {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-stats-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.5fr 0.5fr 1fr;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0.5rem;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 0.5fr 0.5fr 1fr;
+  align-items: center;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.25rem;
+  border-radius: var(--radius-sm);
+}
+
+.active-striker {
+  background-color: rgba(16, 185, 129, 0.1);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.striker-dot {
+  color: var(--primary);
+}
+
+.player-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.balls-bracket {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+.stat-num {
+  text-align: left;
+  color: var(--text-secondary);
+}
+
+.active-striker .stat-num {
+  color: var(--text-primary);
+}
+
+/* Bowler-specific over timeline styling */
+.active-bowler {
+  background-color: rgba(255, 255, 255, 0.02);
+  font-weight: 500;
+}
+
+.over-balls-container {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.over-balls-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.over-balls-list {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.over-balls-list::-webkit-scrollbar {
+  display: none;
+}
+
+.ball-badge {
+  display: inline-flex;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.25rem;
+  border-radius: 50%;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  font-size: 0.75rem;
+  font-weight: 700;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+}
+
+/* Highlights for boundaries or wickets in ball log */
+.ball-badge.run-4 {
+  background-color: rgba(59, 130, 246, 0.2);
+  border-color: #3b82f6;
+  color: #3b82f6;
+}
+
+.ball-badge.run-6 {
+  background-color: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.ball-badge.wicket {
+  background-color: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ef4444;
+}
+
+.ball-badge.extra {
+  background-color: rgba(245, 158, 11, 0.15);
+  border-color: #f59e0b;
+  color: #f59e0b;
+  border-radius: var(--radius-sm);
+}
+
+/* Partnership Bar styling */
+.extra-partnership-bar {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 480px) {
+  .extra-partnership-bar {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+/* Scoring Buttons controls grid */
+.scoring-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.control-row {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.run-buttons {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.extras-buttons {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.actions-buttons {
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+}
+
+@media (max-width: 420px) {
+  .actions-buttons {
+    grid-template-columns: 1.2fr 1fr 1fr;
+  }
+  /* On very small screen, push undo to end */
+}
+
+/* Score button design */
+.btn-score {
+  height: 3.5rem;
+  border-radius: var(--radius-sm);
+  font-size: 1.15rem;
+  font-weight: 700;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-score:hover, .btn-score:focus-visible {
+  border-color: var(--text-secondary);
+  outline: none;
+}
+
+.btn-run {
+  background: linear-gradient(180deg, var(--bg-surface) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+.btn-run[data-value="4"] {
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.btn-run[data-value="6"] {
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.btn-extra {
+  font-size: 0.95rem;
+  font-weight: 600;
+  background-color: rgba(245, 158, 11, 0.04);
+  border-color: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.btn-extra:hover {
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.btn-wicket {
+  background-color: var(--error-bg);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: var(--error);
+}
+
+.btn-wicket:hover {
+  background-color: var(--error);
+  color: #ffffff;
+}
+
+.btn-action {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.btn-undo {
+  font-size: 0.9rem;
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.scoring-footer {
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Wicket modal, bowler selection, retire picker dialogs styling */
+.glass-dialog {
+  margin: auto;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: 1.75rem;
+  max-width: 420px;
+  width: calc(100% - 2rem);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+}
+
+.glass-dialog::backdrop {
+  background-color: rgba(11, 15, 25, 0.85);
+  backdrop-filter: blur(4px);
+}
+
+.dialog-form h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.dialog-hint {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.25rem;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Match Completed Screen */
+.victory-banner {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.summary-details {
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.summary-score-header {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.summary-score-box h3 {
+  font-size: 1.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.summary-score-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.vs-divider {
+  font-weight: 700;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+/* Shareable visual card preview design */
+.share-card-container {
+  border-top: 1px dashed var(--border-color);
+  padding-top: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.share-card-container h3 {
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
+}
+
+.visual-card-preview {
+  background: linear-gradient(135deg, #111827 0%, #064e3b 100%);
+  color: #ffffff;
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-main);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+body.light-mode .visual-card-preview {
+  /* Keep the dark sporty visual card since it is a downloadable asset, looks much cooler! */
+  background: linear-gradient(135deg, #111827 0%, #064e3b 100%);
+  color: #ffffff;
+}
+
+.card-logo {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #34d399;
+}
+
+.card-match-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.card-victory-msg {
+  font-size: 0.9rem;
+  color: #34d399;
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+.card-scores-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0.25rem 0;
+}
+
+.card-team-score {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-team-score span:first-child {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.card-team-score strong {
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.card-team-score span:last-child {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.card-score-vs {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.card-performers {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.card-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.35rem;
+}
+
+.performers-flex {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.performers-flex .label {
+  color: rgba(255, 255, 255, 0.6);
+  margin-right: 0.25rem;
+}
+
+.card-footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.4);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: 0.5rem;
+}
+
+.sharing-actions-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 580px) {
+  .sharing-actions-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
+
+/* Footer Section */
+.app-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border-color);
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

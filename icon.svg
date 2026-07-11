@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Modern radial gradient for backgrounds -->
+    <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%" fx="30%" fy="30%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#047857" />
+    </radialGradient>
+    <!-- Metallic gradient for bat -->
+    <linearGradient id="wood-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#b45309" />
+    </linearGradient>
+    <linearGradient id="grip-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="50%" stop-color="#475569" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Rounded square background -->
+  <rect width="512" height="512" rx="128" fill="url(#bg-grad)" />
+  
+  <!-- Cricket Stumps in Background -->
+  <g opacity="0.3" stroke="#ffffff" stroke-width="12" stroke-linecap="round">
+    <!-- Stumps -->
+    <line x1="206" y1="180" x2="206" y2="380" />
+    <line x1="256" y1="180" x2="256" y2="380" />
+    <line x1="306" y1="180" x2="306" y2="380" />
+    <!-- Bails -->
+    <line x1="196" y1="180" x2="316" y2="180" stroke-width="8" />
+  </g>
+
+  <!-- Crossed Cricket Bats -->
+  <g transform="translate(256, 256)">
+    <!-- Bat 1 (leaning left) -->
+    <g transform="rotate(-45) translate(-24, -200)">
+      <!-- Handle/Grip -->
+      <rect x="16" y="0" width="16" height="120" rx="4" fill="url(#grip-grad)" />
+      <!-- Handle wraps (grippy lines) -->
+      <line x1="16" y1="30" x2="32" y2="30" stroke="#0f172a" stroke-width="2" />
+      <line x1="16" y1="60" x2="32" y2="60" stroke="#0f172a" stroke-width="2" />
+      <line x1="16" y1="90" x2="32" y2="90" stroke="#0f172a" stroke-width="2" />
+      <!-- Wood Blade -->
+      <path d="M8,120 L40,120 L44,380 C44,390 36,400 24,400 C12,400 4,390 4,380 Z" fill="url(#wood-grad)" />
+      <!-- Rubber toe guard -->
+      <path d="M4,370 L44,370 L44,380 C44,390 36,400 24,400 C12,400 4,390 4,380 Z" fill="#1e293b" />
+    </g>
+    
+    <!-- Bat 2 (leaning right) -->
+    <g transform="rotate(45) translate(-24, -200)">
+      <!-- Handle/Grip -->
+      <rect x="16" y="0" width="16" height="120" rx="4" fill="url(#grip-grad)" />
+      <line x1="16" y1="30" x2="32" y2="30" stroke="#0f172a" stroke-width="2" />
+      <line x1="16" y1="60" x2="32" y2="60" stroke="#0f172a" stroke-width="2" />
+      <line x1="16" y1="90" x2="32" y2="90" stroke="#0f172a" stroke-width="2" />
+      <!-- Wood Blade -->
+      <path d="M8,120 L40,120 L44,380 C44,390 36,400 24,400 C12,400 4,390 4,380 Z" fill="url(#wood-grad)" />
+      <path d="M4,370 L44,370 L44,380 C44,390 36,400 24,400 C12,400 4,390 4,380 Z" fill="#1e293b" />
+    </g>
+  </g>
+
+  <!-- Cricket Ball (Front & Center) -->
+  <circle cx="256" cy="340" r="54" fill="#ef4444" filter="drop-shadow(0px 8px 16px rgba(0,0,0,0.4))" />
+  <!-- Ball highlights -->
+  <circle cx="236" cy="320" r="46" fill="#f87171" opacity="0.15" />
+  <!-- White seam lines -->
+  <path d="M256,286 A54,54 0 0,0 256,394" fill="none" stroke="#ffffff" stroke-width="5" stroke-dasharray="6,4" />
+</svg>
