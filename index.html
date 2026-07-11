@@ -26,6 +26,12 @@
         <h1>Turf Cricket Scorer</h1>
       </div>
       <div class="header-actions">
+        <!-- App Mode Switcher Selector -->
+        <select id="mode-selector" class="mode-select" aria-label="Select app mode">
+          <option value="standard">Standard Tournament</option>
+          <option value="quick" selected>Quick Scorer</option>
+        </select>
+        
         <button id="theme-toggle" class="btn-icon" aria-label="Toggle dark/light theme" type="button">
           <span class="theme-icon-dark" aria-hidden="true">🌙</span>
           <span class="theme-icon-light" aria-hidden="true">☀️</span>
@@ -37,8 +43,8 @@
   <!-- Main Content Landmark -->
   <main id="main-content" tabindex="-1">
     
-    <!-- Screen 1: Start/Setup Screen -->
-    <section id="screen-setup" class="screen active" aria-labelledby="setup-title">
+    <!-- Screen 1: Start/Setup Screen (Standard Mode Only) -->
+    <section id="screen-setup" class="screen" aria-labelledby="setup-title">
       <div class="container-small">
         <h2 id="setup-title" class="screen-title">Setup Tournament Day</h2>
         <p class="screen-subtitle">Create a session for your turf cricket day. You can play and score multiple matches.</p>
@@ -131,7 +137,85 @@
       </div>
     </section>
 
-    <!-- Screen 2: Tournament Day Dashboard -->
+    <!-- Screen 6: Quick Setup Screen (Quick Scorer Mode Default) -->
+    <section id="screen-quick-setup" class="screen active" aria-labelledby="quick-setup-title">
+      <div class="container-small">
+        <h2 id="quick-setup-title" class="screen-title">Quick Match Setup</h2>
+        <p class="screen-subtitle">Score a single match instantly. No team names or player lists needed.</p>
+
+        <form id="form-quick-setup">
+          <!-- Match Basic Settings -->
+          <fieldset class="form-fieldset">
+            <legend>Match Structure</legend>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="quick-overs">Overs per Innings</label>
+                <input type="number" id="quick-overs" value="6" min="1" max="50" required>
+              </div>
+              <div class="form-group">
+                <label for="quick-wickets">Wickets per Innings</label>
+                <input type="number" id="quick-wickets" value="10" min="1" max="11" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="quick-innings-type">Match State</label>
+              <select id="quick-innings-type">
+                <option value="1" selected>Batting First (1st Innings)</option>
+                <option value="2">Chasing Target (2nd Innings)</option>
+              </select>
+            </div>
+
+            <div class="form-group id-quick-target-group hidden">
+              <label for="quick-target">Target to Chase (Runs)</label>
+              <input type="number" id="quick-target" placeholder="e.g., 45 runs" min="1">
+            </div>
+          </fieldset>
+
+          <!-- Custom Turf Rules -->
+          <fieldset class="form-fieldset">
+            <legend>Custom Rules Configuration</legend>
+            <div class="rules-flex">
+              <div class="form-group">
+                <label for="quick-wide-value">Wide Ball Run Value</label>
+                <select id="quick-wide-value">
+                  <option value="1" selected>1 Run</option>
+                  <option value="2">2 Runs</option>
+                  <option value="0">0 Runs</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="quick-noball-value">No Ball Run Value</label>
+                <select id="quick-noball-value">
+                  <option value="1" selected>1 Run</option>
+                  <option value="2">2 Runs</option>
+                  <option value="0">0 Runs</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="quick-wide-rebowl" checked>
+                <span>Re-bowl Wide Balls</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="quick-noball-rebowl" checked>
+                <span>Re-bowl No Balls</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="quick-byes-allowed" checked>
+                <span>Allow Byes & Leg Byes</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <button type="submit" class="btn-primary btn-block">Start Quick Scoring</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- Screen 2: Tournament Day Dashboard (Standard Mode Only) -->
     <section id="screen-dashboard" class="screen" aria-labelledby="dashboard-title">
       <div class="container-medium">
         <div class="dashboard-header">
@@ -198,7 +282,7 @@
       </div>
     </section>
 
-    <!-- Screen 3: New Match Settings Popup/Screen (if starting from dashboard) -->
+    <!-- Screen 3: New Match Settings Screen (Standard Mode Only) -->
     <section id="screen-match-setup" class="screen" aria-labelledby="match-setup-title">
       <div class="container-small">
         <h2 id="match-setup-title" class="screen-title">Configure Match</h2>
@@ -274,8 +358,37 @@
           </div>
         </div>
 
-        <!-- Middle Section: Batsman & Bowler Stats -->
-        <div class="players-stats-section">
+        <!-- Lower Section: Tap Scorer Controls -->
+        <div class="scoring-controls">
+          <!-- Run Buttons -->
+          <div class="control-row run-buttons">
+            <button class="btn-score btn-run" data-value="0" type="button">0</button>
+            <button class="btn-score btn-run" data-value="1" type="button">1</button>
+            <button class="btn-score btn-run" data-value="2" type="button">2</button>
+            <button class="btn-score btn-run" data-value="3" type="button">3</button>
+            <button class="btn-score btn-run" data-value="4" type="button">4</button>
+            <button class="btn-score btn-run" data-value="6" type="button">6</button>
+          </div>
+
+          <!-- Extras Buttons -->
+          <div class="control-row extras-buttons">
+            <button class="btn-score btn-extra" id="btn-wd" type="button">Wide</button>
+            <button class="btn-score btn-extra" id="btn-nb" type="button">No Ball</button>
+            <button class="btn-score btn-extra" id="btn-by" type="button">Bye</button>
+            <button class="btn-score btn-extra" id="btn-lb" type="button">Leg Bye</button>
+          </div>
+
+          <!-- Special Action Buttons (Wicket, Strike-rotation, Undo) -->
+          <div class="control-row actions-buttons">
+            <button class="btn-score btn-wicket" id="btn-wicket-trigger" type="button">Wicket</button>
+            <button class="btn-score btn-action standard-mode-only" id="btn-rotate-strike" type="button">Swap Strike</button>
+            <button class="btn-score btn-action standard-mode-only" id="btn-retire-batter" type="button">Retire Batter</button>
+            <button class="btn-score btn-undo" id="btn-undo-trigger" type="button">Undo</button>
+          </div>
+        </div>
+
+        <!-- Middle Section: Batsman & Bowler Stats (Standard Mode Only) -->
+        <div class="players-stats-section standard-mode-only">
           <!-- Batsmen Card -->
           <div class="card-stats glass">
             <div class="card-stats-header">
@@ -328,43 +441,32 @@
           </div>
         </div>
 
+        <!-- Current Over Timeline Row (Quick Mode Only) -->
+        <div class="quick-timeline-row glass quick-mode-only hidden">
+          <span class="timeline-label">This Over:</span>
+          <div id="quick-over-balls-list" class="over-balls-list">
+            <!-- Injected via JavaScript -->
+          </div>
+        </div>
+
         <!-- Partnership & Extras Info -->
         <div class="extra-partnership-bar glass">
-          <div>Partnership: <strong id="live-partnership">0</strong> runs off <strong id="live-partnership-balls">0</strong> balls</div>
-          <div>Extras: <strong id="live-extras-total">0</strong> (Wd: <span id="live-extras-wd">0</span>, Nb: <span id="live-extras-nb">0</span>, By: <span id="live-extras-by">0</span>, Lb: <span id="live-extras-lb">0</span>)</div>
+          <div class="standard-mode-only">Partnership: <strong id="live-partnership">0</strong> runs off <strong id="live-partnership-balls">0</strong> balls</div>
+          <div class="quick-mode-only hidden">Over timeline:</div>
+          <div>Extras: <strong id="live-extras-total">0</strong> (Wd: <span id="live-extras-wide">0</span>, Nb: <span id="live-extras-nb">0</span>, By: <span id="live-extras-by">0</span>, Lb: <span id="live-extras-lb">0</span>)</div>
         </div>
 
-        <!-- Lower Section: Tap Scorer Controls -->
-        <div class="scoring-controls">
-          
-          <!-- Run Buttons -->
-          <div class="control-row run-buttons">
-            <button class="btn-score btn-run" data-value="0" type="button">0</button>
-            <button class="btn-score btn-run" data-value="1" type="button">1</button>
-            <button class="btn-score btn-run" data-value="2" type="button">2</button>
-            <button class="btn-score btn-run" data-value="3" type="button">3</button>
-            <button class="btn-score btn-run" data-value="4" type="button">4</button>
-            <button class="btn-score btn-run" data-value="6" type="button">6</button>
-          </div>
-
-          <!-- Extras Buttons -->
-          <div class="control-row extras-buttons">
-            <button class="btn-score btn-extra" id="btn-wd" type="button">Wide</button>
-            <button class="btn-score btn-extra" id="btn-nb" type="button">No Ball</button>
-            <button class="btn-score btn-extra" id="btn-by" type="button">Bye</button>
-            <button class="btn-score btn-extra" id="btn-lb" type="button">Leg Bye</button>
-          </div>
-
-          <!-- Special Action Buttons (Wicket, Strike-rotation, Undo) -->
-          <div class="control-row actions-buttons">
-            <button class="btn-score btn-wicket" id="btn-wicket-trigger" type="button">Wicket</button>
-            <button class="btn-score btn-action" id="btn-rotate-strike" type="button">Swap Strike</button>
-            <button class="btn-score btn-action" id="btn-retire-batter" type="button">Retire Batter</button>
-            <button class="btn-score btn-undo" id="btn-undo-trigger" type="button">Undo</button>
+        <!-- Middle Section: Over Summaries (Quick Mode Only) -->
+        <div class="quick-over-summary-section quick-mode-only hidden">
+          <div class="card-over-summary glass">
+            <h3>Completed Overs Log</h3>
+            <div id="quick-overs-list-container" class="quick-overs-list-container">
+              <p class="empty-state-overs">No overs completed yet.</p>
+            </div>
           </div>
         </div>
 
-        <!-- Match Options (End Match prematurely / edit rules) -->
+        <!-- Match Options -->
         <div class="scoring-footer">
           <button id="btn-end-match-early" class="btn-danger" type="button">End Match / Forfeit</button>
         </div>
@@ -376,28 +478,27 @@
       <div class="container-medium">
         <h2 id="summary-screen-title" class="screen-title text-center">Match Completed</h2>
         <div id="match-victory-banner" class="victory-banner">
-          Team A won by 4 Wickets!
+          Team Alpha won by 4 Wickets!
         </div>
 
-        <!-- Summary Scorecards Tabs/Layout -->
+        <!-- Summary Scorecards Details -->
         <div class="summary-details glass">
           <div class="summary-score-header">
             <div class="summary-score-box">
-              <h3 id="summary-team-a-name">Team A</h3>
+              <h3 id="summary-team-a-name">Batting Team</h3>
               <div id="summary-team-a-score" class="summary-score-text">0/0 (0 Ovs)</div>
             </div>
             <div class="vs-divider">VS</div>
             <div class="summary-score-box">
-              <h3 id="summary-team-b-name">Team B</h3>
+              <h3 id="summary-team-b-name">Bowling Team</h3>
               <div id="summary-team-b-score" class="summary-score-text">0/0 (0 Ovs)</div>
             </div>
           </div>
 
-          <!-- Share card preview container -->
-          <section class="share-card-container">
+          <!-- Share card preview container (Standard Mode Only) -->
+          <section class="share-card-container standard-mode-only">
             <h3>Shareable Card Preview</h3>
             <div id="shareable-visual-card" class="visual-card-preview">
-              <!-- Dynamically rendered visual details -->
               <div class="card-logo">🏏 Turf Cricket</div>
               <div id="card-match-title" class="card-match-title">Team Alpha vs Team Bravo</div>
               <div id="card-victory-msg" class="card-victory-msg">Team Alpha won by 10 runs</div>
@@ -442,7 +543,7 @@
             <button id="btn-copy-text" class="btn-secondary">
               📋 Copy Text Scorecard
             </button>
-            <button id="btn-download-image" class="btn-secondary">
+            <button id="btn-download-image" class="btn-secondary standard-mode-only">
               🖼️ Download Scorecard Image
             </button>
           </div>
@@ -458,7 +559,7 @@
   <!-- Accessibility Announcer for Live Regions -->
   <div id="a11y-announcer" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
 
-  <!-- DIALOG 1: Setup Striker/Non-Striker or Batter Names on Match Start -->
+  <!-- DIALOG 1: Select batters opener (Standard Mode Only) -->
   <dialog id="dialog-select-batters" class="glass-dialog">
     <form method="dialog" class="dialog-form">
       <h3>Select Openers</h3>
@@ -483,7 +584,7 @@
     </form>
   </dialog>
 
-  <!-- DIALOG 2: Bowler Selection (End of Over) -->
+  <!-- DIALOG 2: Bowler Selection (Standard Mode Only) -->
   <dialog id="dialog-select-bowler" class="glass-dialog">
     <form method="dialog" class="dialog-form">
       <h3>Select New Bowler</h3>
@@ -500,7 +601,7 @@
     </form>
   </dialog>
 
-  <!-- DIALOG 3: Wicket Picker Details -->
+  <!-- DIALOG 3: Wicket Picker Details (Standard Mode Only) -->
   <dialog id="dialog-wicket-picker" class="glass-dialog">
     <form method="dialog" class="dialog-form">
       <h3>How did the Wicket Fall?</h3>
@@ -543,7 +644,7 @@
     </form>
   </dialog>
 
-  <!-- DIALOG 4: Retire Batter Dialog -->
+  <!-- DIALOG 4: Retire Batter Dialog (Standard Mode Only) -->
   <dialog id="dialog-retire-batter" class="glass-dialog">
     <form method="dialog" class="dialog-form">
       <h3>Retire Batter</h3>

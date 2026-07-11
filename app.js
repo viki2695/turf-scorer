@@ -20,20 +20,25 @@ let tournament = {
 };
 
 let activeMatch = null;
+let appMode = 'quick'; // 'standard' or 'quick'
+let quickMatch = null;
 
 // --- DOM Elements ---
 const themeToggle = document.getElementById('theme-toggle');
+const modeSelector = document.getElementById('mode-selector');
 const screens = {
   'setup': document.getElementById('screen-setup'),
   'dashboard': document.getElementById('screen-dashboard'),
   'match-setup': document.getElementById('screen-match-setup'),
   'scoring': document.getElementById('screen-scoring'),
-  'summary': document.getElementById('screen-match-summary')
+  'summary': document.getElementById('screen-match-summary'),
+  'quick-setup': document.getElementById('screen-quick-setup')
 };
 
 // Forms
 const formSetup = document.getElementById('form-setup');
 const formMatchSetup = document.getElementById('form-match-setup');
+const formQuickSetup = document.getElementById('form-quick-setup');
 
 // Dialogs
 const dialogSelectBatters = document.getElementById('dialog-select-batters');
@@ -48,9 +53,22 @@ const a11yAnnouncer = document.getElementById('a11y-announcer');
 
 // Screen Router
 function showScreen(screenId) {
-  Object.values(screens).forEach(screen => screen.classList.remove('active'));
-  screens[screenId].classList.add('active');
+  Object.values(screens).forEach(screen => {
+    if (screen) screen.classList.remove('active');
+  });
+  if (screens[screenId]) {
+    screens[screenId].classList.add('active');
+  }
   window.scrollTo(0, 0);
+  
+  // Manage visibility of Standard vs Quick Mode sections globally
+  if (appMode === 'quick') {
+    document.querySelectorAll('.standard-mode-only').forEach(el => el.classList.add('hidden'));
+    document.querySelectorAll('.quick-mode-only').forEach(el => el.classList.remove('hidden'));
+  } else {
+    document.querySelectorAll('.standard-mode-only').forEach(el => el.classList.remove('hidden'));
+    document.querySelectorAll('.quick-mode-only').forEach(el => el.classList.add('hidden'));
+  }
 }
 
 // A11y Speech Announcer
@@ -92,35 +110,60 @@ function ballsToOvers(ballsCount) {
 
 // Save & Load LocalStorage
 function saveState() {
-  localStorage.setItem('turf_cricket_tournament', JSON.stringify(tournament));
-  if (activeMatch) {
-    localStorage.setItem('turf_cricket_active_match', JSON.stringify(activeMatch));
+  localStorage.setItem('turf_cricket_app_mode', appMode);
+  if (appMode === 'quick') {
+    if (quickMatch) {
+      localStorage.setItem('turf_cricket_quick_match', JSON.stringify(quickMatch));
+    } else {
+      localStorage.removeItem('turf_cricket_quick_match');
+    }
   } else {
-    localStorage.removeItem('turf_cricket_active_match');
+    localStorage.setItem('turf_cricket_tournament', JSON.stringify(tournament));
+    if (activeMatch) {
+      localStorage.setItem('turf_cricket_active_match', JSON.stringify(activeMatch));
+    } else {
+      localStorage.removeItem('turf_cricket_active_match');
+    }
   }
 }
 
 function loadState() {
-  const savedTourney = localStorage.getItem('turf_cricket_tournament');
-  const savedActiveMatch = localStorage.getItem('turf_cricket_active_match');
+  appMode = localStorage.getItem('turf_cricket_app_mode') || 'quick';
+  modeSelector.value = appMode;
   
-  if (savedTourney) {
-    tournament = JSON.parse(savedTourney);
-    updateDashboardUI();
-    showScreen('dashboard');
+  if (appMode === 'quick') {
+    document.body.classList.add('quick-mode-active');
+    const savedQuickMatch = localStorage.getItem('turf_cricket_quick_match');
+    if (savedQuickMatch) {
+      quickMatch = JSON.parse(savedQuickMatch);
+      updateScoringUI();
+      showScreen('scoring');
+    } else {
+      showScreen('quick-setup');
+    }
   } else {
-    showScreen('setup');
-  }
-  
-  if (savedActiveMatch) {
-    activeMatch = JSON.parse(savedActiveMatch);
-    updateScoringUI();
-    showScreen('scoring');
+    document.body.classList.remove('quick-mode-active');
+    const savedTourney = localStorage.getItem('turf_cricket_tournament');
+    const savedActiveMatch = localStorage.getItem('turf_cricket_active_match');
     
-    // Check if we need opening batter details
-    const innings = activeMatch.innings[activeMatch.currentInnings - 1];
-    if (!innings.striker || !innings.nonStriker || !innings.currentBowler) {
-      promptOpeners();
+    if (savedTourney) {
+      tournament = JSON.parse(savedTourney);
+      updateDashboardUI();
+      showScreen('dashboard');
+    } else {
+      showScreen('setup');
+    }
+    
+    if (savedActiveMatch) {
+      activeMatch = JSON.parse(savedActiveMatch);
+      updateScoringUI();
+      showScreen('scoring');
+      
+      // Check if we need opening batter details
+      const innings = activeMatch.innings[activeMatch.currentInnings - 1];
+      if (!innings.striker || !innings.nonStriker || !innings.currentBowler) {
+        promptOpeners();
+      }
     }
   }
 }
@@ -153,6 +196,67 @@ formSetup.addEventListener('submit', (e) => {
   updateDashboardUI();
   showScreen('dashboard');
   announce("Scoring session started successfully.");
+});
+
+// --- Mode Switcher Event ---
+modeSelector.addEventListener('change', (e) => {
+  appMode = e.target.value;
+  localStorage.setItem('turf_cricket_app_mode', appMode);
+  loadState();
+});
+
+// Toggle quick match target input based on innings type
+const quickInningsType = document.getElementById('quick-innings-type');
+quickInningsType.addEventListener('change', (e) => {
+  const targetGroup = document.querySelector('.id-quick-target-group');
+  if (e.target.value === '2') {
+    targetGroup.classList.remove('hidden');
+    document.getElementById('quick-target').required = true;
+  } else {
+    targetGroup.classList.add('hidden');
+    document.getElementById('quick-target').required = false;
+  }
+});
+
+// Quick Mode Setup Form Submission
+formQuickSetup.addEventListener('submit', (e) => {
+  e.preventDefault();
+  
+  const overs = parseInt(document.getElementById('quick-overs').value, 10);
+  const wickets = parseInt(document.getElementById('quick-wickets').value, 10);
+  const inningsType = parseInt(document.getElementById('quick-innings-type').value, 10);
+  
+  let target = 0;
+  if (inningsType === 2) {
+    target = parseInt(document.getElementById('quick-target').value, 10);
+  }
+  
+  // Set up quick match state
+  quickMatch = {
+    overs: overs,
+    wicketsMax: wickets,
+    inningsType: inningsType,
+    target: target,
+    runs: 0,
+    wickets: 0,
+    balls: 0,
+    extras: { wide: 0, noball: 0, bye: 0, legbye: 0, total: 0 },
+    wideValue: parseInt(document.getElementById('quick-wide-value').value, 10),
+    noballValue: parseInt(document.getElementById('quick-noball-value').value, 10),
+    wideRebowl: document.getElementById('quick-wide-rebowl').checked,
+    noballRebowl: document.getElementById('quick-noball-rebowl').checked,
+    byesAllowed: document.getElementById('quick-byes-allowed').checked,
+    overTimeline: [],
+    oversList: [],
+    history: [],
+    status: 'live',
+    victoryMessage: ''
+  };
+  
+  saveState();
+  showScreen('scoring');
+  updateScoringUI();
+  announce(`Quick Match started: Innings ${inningsType === 1 ? '1' : '2 (Chasing ' + target + ')'}`);
 });
 
 // --- Dashboard Screen Events ---
@@ -262,17 +366,46 @@ dialogSelectBatters.addEventListener('submit', (e) => {
 
 // Record State snapshot for Undo history
 function saveHistory() {
-  const snapshot = {
-    currentInnings: activeMatch.currentInnings,
-    status: activeMatch.status,
-    victoryMessage: activeMatch.victoryMessage,
-    innings: deepCopy(activeMatch.innings)
-  };
-  activeMatch.history.push(snapshot);
+  if (appMode === 'quick') {
+    if (!quickMatch) return;
+    const snapshot = {
+      runs: quickMatch.runs,
+      wickets: quickMatch.wickets,
+      balls: quickMatch.balls,
+      extras: deepCopy(quickMatch.extras),
+      overTimeline: [...quickMatch.overTimeline],
+      oversList: deepCopy(quickMatch.oversList),
+      status: quickMatch.status,
+      victoryMessage: quickMatch.victoryMessage,
+      inningsType: quickMatch.inningsType,
+      target: quickMatch.target
+    };
+    quickMatch.history.push(snapshot);
+  } else {
+    if (!activeMatch) return;
+    const snapshot = {
+      currentInnings: activeMatch.currentInnings,
+      status: activeMatch.status,
+      victoryMessage: activeMatch.victoryMessage,
+      innings: deepCopy(activeMatch.innings)
+    };
+    activeMatch.history.push(snapshot);
+  }
 }
 
 // Handle Legal Runs (0, 1, 2, 3, 4, 6)
 function recordRuns(runsVal) {
+  if (appMode === 'quick') {
+    if (!quickMatch || quickMatch.status !== 'live') return;
+    saveHistory();
+    quickMatch.runs += runsVal;
+    quickMatch.balls += 1;
+    quickMatch.overTimeline.push(runsVal.toString());
+    announce(`${runsVal} runs.`);
+    afterBallCheck();
+    return;
+  }
+
   if (!activeMatch || activeMatch.status !== 'live') return;
   saveHistory();
   
@@ -318,6 +451,58 @@ function recordRuns(runsVal) {
 
 // Handle Extras (Wide, No Ball, Bye, Leg Bye)
 function recordExtra(type) {
+  if (appMode === 'quick') {
+    if (!quickMatch || quickMatch.status !== 'live') return;
+    
+    if (type === 'wide') {
+      saveHistory();
+      const penalty = quickMatch.wideValue;
+      quickMatch.runs += penalty;
+      quickMatch.extras.wide += penalty;
+      quickMatch.extras.total += penalty;
+      quickMatch.overTimeline.push('Wd');
+      if (!quickMatch.wideRebowl) {
+        quickMatch.balls += 1;
+      }
+      announce(`Wide ball, +${penalty} runs.`);
+      afterBallCheck();
+    } else if (type === 'noball') {
+      saveHistory();
+      const penalty = quickMatch.noballValue;
+      quickMatch.runs += penalty;
+      quickMatch.extras.noball += penalty;
+      quickMatch.extras.total += penalty;
+      quickMatch.overTimeline.push('Nb');
+      if (!quickMatch.noballRebowl) {
+        quickMatch.balls += 1;
+      }
+      announce(`No ball, +${penalty} runs.`);
+      afterBallCheck();
+    } else if (type === 'bye' || type === 'legbye') {
+      if (!quickMatch.byesAllowed) {
+        announce("Byes/Leg-byes are disabled by custom rules.");
+        return;
+      }
+      const runString = prompt("Enter number of Byes/Leg Byes run:", "1");
+      const runsRun = parseInt(runString, 10);
+      if (isNaN(runsRun) || runsRun < 0) return;
+      
+      saveHistory();
+      quickMatch.runs += runsRun;
+      quickMatch.balls += 1;
+      if (type === 'bye') {
+        quickMatch.extras.bye += runsRun;
+      } else {
+        quickMatch.extras.legbye += runsRun;
+      }
+      quickMatch.extras.total += runsRun;
+      quickMatch.overTimeline.push(`${type === 'bye' ? 'B' : 'Lb'}${runsRun}`);
+      announce(`${runsRun} ${type}s recorded.`);
+      afterBallCheck();
+    }
+    return;
+  }
+
   if (!activeMatch || activeMatch.status !== 'live') return;
   
   const innings = activeMatch.innings[activeMatch.currentInnings - 1];
@@ -486,6 +671,17 @@ dialogRetireBatter.addEventListener('submit', (e) => {
 
 // Wicket trigger click
 document.getElementById('btn-wicket-trigger').addEventListener('click', () => {
+  if (appMode === 'quick') {
+    if (!quickMatch || quickMatch.status !== 'live') return;
+    saveHistory();
+    quickMatch.wickets += 1;
+    quickMatch.balls += 1;
+    quickMatch.overTimeline.push('W');
+    announce("Wicket!");
+    afterBallCheck();
+    return;
+  }
+
   if (!activeMatch || activeMatch.status !== 'live') return;
   const innings = activeMatch.innings[activeMatch.currentInnings - 1];
   
@@ -616,6 +812,38 @@ dialogWicketPicker.addEventListener('submit', (e) => {
 
 // Check Innings/Match statuses after each ball
 function afterBallCheck(hasPromptedStateChange = false) {
+  if (appMode === 'quick') {
+    if (!quickMatch) return;
+    
+    let transitionOccurred = false;
+    const maxBalls = quickMatch.overs * 6;
+    
+    // Scenario C: Target chased down (Innings 2)
+    if (quickMatch.inningsType === 2 && quickMatch.runs >= quickMatch.target) {
+      endQuickMatch();
+      transitionOccurred = true;
+    } 
+    // Scenario A/B: Innings completed (all out or overs done)
+    else if (quickMatch.wickets >= quickMatch.wicketsMax || quickMatch.balls >= maxBalls) {
+      if (quickMatch.inningsType === 1) {
+        endQuickFirstInnings();
+        transitionOccurred = true;
+      } else {
+        endQuickMatch();
+        transitionOccurred = true;
+      }
+    }
+    
+    // Handle standard Over End (and not in transition)
+    if (!transitionOccurred && quickMatch.balls > 0 && quickMatch.balls % 6 === 0 && quickMatch.overTimeline.length > 0) {
+      endQuickOver();
+    }
+    
+    saveState();
+    updateScoringUI();
+    return;
+  }
+
   const innings = activeMatch.innings[activeMatch.currentInnings - 1];
   const totalOvers = tournament.oversPerMatch;
   const inningsBallsMax = totalOvers * 6;
@@ -663,6 +891,113 @@ function afterBallCheck(hasPromptedStateChange = false) {
   
   saveState();
   updateScoringUI();
+}
+
+// --- Quick Mode scoring transitions ---
+function endQuickOver() {
+  if (!quickMatch) return;
+  
+  let previousRuns = 0;
+  quickMatch.oversList.forEach(o => previousRuns += o.runs);
+  const runsInOver = quickMatch.runs - previousRuns;
+  
+  quickMatch.oversList.push({
+    overNum: Math.floor(quickMatch.balls / 6),
+    runs: runsInOver,
+    timeline: [...quickMatch.overTimeline]
+  });
+  
+  quickMatch.overTimeline = [];
+  announce(`Over completed. Runs in over: ${runsInOver}`);
+}
+
+function endQuickFirstInnings() {
+  if (!quickMatch) return;
+  
+  // Auto-archive last over if it was completed
+  if (quickMatch.balls > 0 && quickMatch.balls % 6 === 0 && quickMatch.overTimeline.length > 0) {
+    endQuickOver();
+  }
+  
+  const target = quickMatch.runs + 1;
+  const ok = confirm(`Innings 1 Completed: ${quickMatch.runs}/${quickMatch.wickets} (${ballsToOvers(quickMatch.balls)} Overs).\nStart Innings 2? Target: ${target}`);
+  if (ok) {
+    quickMatch.inningsType = 2;
+    quickMatch.target = target;
+    quickMatch.runs = 0;
+    quickMatch.wickets = 0;
+    quickMatch.balls = 0;
+    quickMatch.extras = { wide: 0, noball: 0, bye: 0, legbye: 0, total: 0 };
+    quickMatch.overTimeline = [];
+    quickMatch.oversList = [];
+    quickMatch.history = [];
+    
+    saveState();
+    updateScoringUI();
+    announce(`Innings 2 started. Target: ${target} runs.`);
+  } else {
+    endQuickMatch();
+  }
+}
+
+function endQuickMatch() {
+  if (!quickMatch) return;
+  
+  // Auto-archive last over if it was completed
+  if (quickMatch.balls > 0 && quickMatch.balls % 6 === 0 && quickMatch.overTimeline.length > 0) {
+    endQuickOver();
+  }
+  
+  quickMatch.status = 'completed';
+  
+  let msg = '';
+  if (quickMatch.inningsType === 2) {
+    if (quickMatch.runs >= quickMatch.target) {
+      msg = `Chasing Team won the match!`;
+    } else {
+      if (quickMatch.runs === quickMatch.target - 1) {
+        msg = `Match Tied! Both teams scored ${quickMatch.runs} runs.`;
+      } else {
+        const runsMargin = quickMatch.target - 1 - quickMatch.runs;
+        msg = `Defending Team won by ${runsMargin} run${runsMargin !== 1 ? 's' : ''}!`;
+      }
+    }
+  } else {
+    msg = `First Innings Completed: ${quickMatch.runs}/${quickMatch.wickets} in ${ballsToOvers(quickMatch.balls)} Overs.`;
+  }
+  
+  quickMatch.victoryMessage = msg;
+  
+  // Save match state
+  saveState();
+  
+  // Transition to summary screen
+  showQuickSummaryScreen(quickMatch);
+}
+
+function showQuickSummaryScreen(match) {
+  viewingMatch = match;
+  showScreen('summary');
+  
+  document.getElementById('match-victory-banner').textContent = match.victoryMessage;
+  
+  // Hide visual card preview since it relies on team names/player stats
+  document.querySelectorAll('.standard-mode-only').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.quick-mode-only').forEach(el => el.classList.remove('hidden'));
+  
+  if (match.inningsType === 2) {
+    document.getElementById('summary-team-a-name').textContent = "1st Innings";
+    document.getElementById('summary-team-a-score').textContent = `${match.target - 1} Runs`;
+    
+    document.getElementById('summary-team-b-name').textContent = "2nd Innings";
+    document.getElementById('summary-team-b-score').textContent = `${match.runs}/${match.wickets} (${ballsToOvers(match.balls)} Ovs)`;
+  } else {
+    document.getElementById('summary-team-a-name').textContent = "Batting Team";
+    document.getElementById('summary-team-a-score').textContent = `${match.runs}/${match.wickets} (${ballsToOvers(match.balls)} Ovs)`;
+    
+    document.getElementById('summary-team-b-name').textContent = "-";
+    document.getElementById('summary-team-b-score').textContent = "";
+  }
 }
 
 // End of Over transition
@@ -764,6 +1099,14 @@ function endMatch(forfeit = false, forfeitWinner = '') {
 
 // Forfeit/End Match prematurely
 document.getElementById('btn-end-match-early').addEventListener('click', () => {
+  if (appMode === 'quick') {
+    if (!quickMatch) return;
+    const ok = confirm("Are you sure you want to end this match?");
+    if (!ok) return;
+    endQuickMatch();
+    return;
+  }
+
   if (!activeMatch) return;
   const ok = confirm("Are you sure you want to end this match prematurely?");
   if (!ok) return;
@@ -789,6 +1132,29 @@ document.getElementById('btn-undo-trigger').addEventListener('click', () => {
 });
 
 function handleUndo() {
+  if (appMode === 'quick') {
+    if (!quickMatch || quickMatch.history.length === 0) {
+      announce("No actions to undo.");
+      return;
+    }
+    const prevState = quickMatch.history.pop();
+    quickMatch.runs = prevState.runs;
+    quickMatch.wickets = prevState.wickets;
+    quickMatch.balls = prevState.balls;
+    quickMatch.extras = prevState.extras;
+    quickMatch.overTimeline = prevState.overTimeline;
+    quickMatch.oversList = prevState.oversList;
+    quickMatch.status = prevState.status;
+    quickMatch.victoryMessage = prevState.victoryMessage;
+    quickMatch.inningsType = prevState.inningsType;
+    quickMatch.target = prevState.target;
+    
+    saveState();
+    updateScoringUI();
+    announce("Last action undone.");
+    return;
+  }
+
   if (!activeMatch || activeMatch.history.length === 0) {
     announce("No actions to undo.");
     return;
@@ -821,6 +1187,104 @@ document.getElementById('btn-by').addEventListener('click', () => recordExtra('b
 document.getElementById('btn-lb').addEventListener('click', () => recordExtra('legbye'));
 
 function updateScoringUI() {
+  if (appMode === 'quick') {
+    if (!quickMatch) return;
+    
+    // Scores
+    document.getElementById('live-batting-team').textContent = quickMatch.inningsType === 1 ? "Batting First" : "Chasing Target";
+    document.getElementById('live-innings-num').textContent = quickMatch.inningsType;
+    document.getElementById('live-runs').textContent = quickMatch.runs;
+    document.getElementById('live-wickets').textContent = quickMatch.wickets;
+    
+    const oversText = ballsToOvers(quickMatch.balls);
+    document.getElementById('live-overs').textContent = oversText;
+    
+    // CRR
+    const completedOversFloat = (Math.floor(quickMatch.balls / 6)) + ((quickMatch.balls % 6) / 6);
+    const crr = completedOversFloat > 0 ? (quickMatch.runs / completedOversFloat).toFixed(2) : '0.00';
+    document.getElementById('live-crr').textContent = crr;
+    
+    // Equation / Target
+    const targetContainer = document.getElementById('live-target-container');
+    const equationText = document.getElementById('live-match-equation');
+    
+    if (quickMatch.inningsType === 2) {
+      targetContainer.classList.remove('hidden');
+      document.getElementById('live-target').textContent = quickMatch.target;
+      
+      const maxBalls = quickMatch.overs * 6;
+      const remainingBalls = maxBalls - quickMatch.balls;
+      const runsNeeded = quickMatch.target - quickMatch.runs;
+      
+      const rrr = remainingBalls > 0 ? ((runsNeeded / remainingBalls) * 6).toFixed(2) : '0.00';
+      document.getElementById('live-rrr').textContent = rrr;
+      
+      equationText.textContent = `Needs ${runsNeeded} run${runsNeeded !== 1 ? 's' : ''} off ${remainingBalls} ball${remainingBalls !== 1 ? 's' : ''} (RRR: ${rrr})`;
+    } else {
+      targetContainer.classList.add('hidden');
+      equationText.textContent = `1st Innings Batting. Overs setup: ${quickMatch.overs} ovs.`;
+    }
+    
+    // Current over timeline rendering (Quick Mode Specific)
+    const timelineList = document.getElementById('quick-over-balls-list');
+    timelineList.innerHTML = '';
+    quickMatch.overTimeline.forEach(ball => {
+      const badge = document.createElement('span');
+      badge.className = 'ball-badge';
+      badge.textContent = ball;
+      if (ball === '4') badge.classList.add('run-4');
+      else if (ball === '6') badge.classList.add('run-6');
+      else if (ball === 'W') badge.classList.add('wicket');
+      else if (ball.includes('Wd') || ball.includes('Nb') || ball.includes('B') || ball.includes('Lb')) {
+        badge.classList.add('extra');
+      }
+      timelineList.appendChild(badge);
+    });
+    
+    // Completed Overs summaries rendering
+    const oversContainer = document.getElementById('quick-overs-list-container');
+    oversContainer.innerHTML = '';
+    if (quickMatch.oversList.length === 0) {
+      oversContainer.innerHTML = `<p class="empty-state-overs">No overs completed yet.</p>`;
+    } else {
+      [...quickMatch.oversList].reverse().forEach(o => {
+        const row = document.createElement('div');
+        row.className = 'quick-over-row';
+        
+        let badgesHtml = o.timeline.map(b => {
+          let extraClass = '';
+          if (b === '4') extraClass = 'run-4';
+          else if (b === '6') extraClass = 'run-6';
+          else if (b === 'W') extraClass = 'wicket';
+          else if (b.includes('Wd') || b.includes('Nb') || b.includes('B') || b.includes('Lb')) {
+            extraClass = 'extra';
+          }
+          return `<span class="ball-badge ${extraClass}">${b}</span>`;
+        }).join(' ');
+        
+        row.innerHTML = `
+          <span class="quick-over-num">Over ${o.overNum}</span>
+          <span class="quick-over-runs">${o.runs} runs</span>
+          <div class="over-balls-list">${badgesHtml}</div>
+        `;
+        oversContainer.appendChild(row);
+      });
+    }
+    
+    // Extras totals
+    document.getElementById('live-extras-total').textContent = quickMatch.extras.total;
+    document.getElementById('live-extras-wide').textContent = quickMatch.extras.wide;
+    document.getElementById('live-extras-nb').textContent = quickMatch.extras.noball;
+    document.getElementById('live-extras-by').textContent = quickMatch.extras.bye;
+    document.getElementById('live-extras-lb').textContent = quickMatch.extras.legbye;
+    
+    // Disable undo button if no history exists
+    const undoBtn = document.getElementById('btn-undo-trigger');
+    undoBtn.disabled = quickMatch.history.length === 0;
+    undoBtn.style.opacity = quickMatch.history.length === 0 ? '0.5' : '1';
+    return;
+  }
+
   if (!activeMatch) return;
   
   const currentInn = activeMatch.currentInnings;
@@ -954,7 +1418,7 @@ function updateScoringUI() {
   document.getElementById('live-partnership-balls').textContent = currentPartnershipBalls;
   
   document.getElementById('live-extras-total').textContent = innings.extras.total;
-  document.getElementById('live-extras-wd').textContent = innings.extras.wide;
+  document.getElementById('live-extras-wide').textContent = innings.extras.wide;
   document.getElementById('live-extras-nb').textContent = innings.extras.noball;
   document.getElementById('live-extras-by').textContent = innings.extras.bye;
   document.getElementById('live-extras-lb').textContent = innings.extras.legbye;
@@ -1139,8 +1603,14 @@ function showSummaryScreen(match) {
 // Back to Dashboard button
 document.getElementById('btn-back-dashboard').addEventListener('click', () => {
   viewingMatch = null;
-  updateDashboardUI();
-  showScreen('dashboard');
+  if (appMode === 'quick') {
+    quickMatch = null;
+    saveState();
+    showScreen('quick-setup');
+  } else {
+    updateDashboardUI();
+    showScreen('dashboard');
+  }
 });
 
 // --- Share Utilities ---
@@ -1165,6 +1635,21 @@ document.getElementById('btn-copy-text').addEventListener('click', () => {
 
 // Text summary generator for Whatsapp/Clipboard
 function generateMatchTextSummary(match) {
+  if (!match.innings) {
+    let text = `🏏 *QUICK CRICKET SCORECARD* 🏏\n`;
+    text += `🏆 *Result:* ${match.victoryMessage}\n\n`;
+    
+    if (match.inningsType === 2) {
+      text += `*1st Innings (Target Setter):* ${match.target - 1} runs\n`;
+      text += `*2nd Innings (Chasing Team):* *${match.runs}/${match.wickets}* (${ballsToOvers(match.balls)} overs)\n`;
+    } else {
+      text += `*Score:* *${match.runs}/${match.wickets}* (${ballsToOvers(match.balls)} overs)\n`;
+    }
+    text += `Extras: ${match.extras.total} (Wd:${match.extras.wide}, Nb:${match.extras.noball}, By:${match.extras.bye}, Lb:${match.extras.legbye})\n\n`;
+    text += `Scored on Turf Cricket App.`;
+    return text;
+  }
+
   const inn1 = match.innings[0];
   const inn2 = match.innings[1];
   
