@@ -61,6 +61,15 @@ function showScreen(screenId) {
   }
   window.scrollTo(0, 0);
   
+  // Disable mode selector during a live match to avoid accidental scoring data loss
+  if (screenId === 'scoring') {
+    modeSelector.disabled = true;
+    modeSelector.style.opacity = '0.5';
+  } else {
+    modeSelector.disabled = false;
+    modeSelector.style.opacity = '1';
+  }
+  
   // Manage visibility of Standard vs Quick Mode sections globally
   if (appMode === 'quick') {
     document.querySelectorAll('.standard-mode-only').forEach(el => el.classList.add('hidden'));
@@ -264,6 +273,20 @@ document.getElementById('btn-start-match').addEventListener('click', () => {
   document.getElementById('match-team-a').value = tournament.defaultTeamA;
   document.getElementById('match-team-b').value = tournament.defaultTeamB;
   showScreen('match-setup');
+});
+
+document.getElementById('btn-end-tournament').addEventListener('click', () => {
+  const ok = confirm("Are you sure you want to end this tournament session? All history for today will be cleared.");
+  if (!ok) return;
+  
+  localStorage.removeItem('turf_cricket_tournament');
+  localStorage.removeItem('turf_cricket_active_match');
+  tournament = { dayName: '', defaultTeamA: '', defaultTeamB: '', matches: [] };
+  activeMatch = null;
+  
+  saveState();
+  showScreen('setup');
+  announce("Tournament ended. Day session cleared.");
 });
 
 document.getElementById('btn-cancel-match-setup').addEventListener('click', () => {
