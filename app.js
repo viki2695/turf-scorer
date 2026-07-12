@@ -89,6 +89,90 @@ function announce(message) {
   }, 2000);
 }
 
+// Count number of legal balls in an over's timeline
+function countLegalBalls(timeline) {
+  if (!timeline || timeline.length === 0) return 0;
+  return timeline.filter(ball => {
+    const isWideRebowl = appMode === 'quick' ? quickMatch.wideRebowl : tournament.wideRebowl;
+    const isNoballRebowl = appMode === 'quick' ? quickMatch.noballRebowl : tournament.noballRebowl;
+    
+    if (ball.includes('Wd') && isWideRebowl) return false;
+    if (ball.includes('Nb') && isNoballRebowl) return false;
+    return true;
+  }).length;
+}
+
+// Custom Premium Async Dialog Helpers
+function customConfirm(title, message) {
+  return new Promise((resolve) => {
+    const dialog = document.getElementById('dialog-custom-confirm');
+    document.getElementById('custom-confirm-title').textContent = title;
+    document.getElementById('custom-confirm-message').textContent = message;
+    
+    const btnCancel = document.getElementById('btn-custom-confirm-cancel');
+    const btnOk = document.getElementById('btn-custom-confirm-ok');
+    
+    const cleanup = (value) => {
+      dialog.close();
+      btnCancel.removeEventListener('click', onCancel);
+      btnOk.removeEventListener('click', onOk);
+      dialog.removeEventListener('cancel', onSystemCancel);
+      resolve(value);
+    };
+    
+    const onCancel = () => cleanup(false);
+    const onOk = () => cleanup(true);
+    const onSystemCancel = (e) => {
+      e.preventDefault();
+      cleanup(false);
+    };
+    
+    btnCancel.addEventListener('click', onCancel);
+    btnOk.addEventListener('click', onOk);
+    dialog.addEventListener('cancel', onSystemCancel);
+    
+    dialog.showModal();
+  });
+}
+
+function customPrompt(title, message, defaultValue = "") {
+  return new Promise((resolve) => {
+    const dialog = document.getElementById('dialog-custom-prompt');
+    const form = document.getElementById('form-custom-prompt');
+    const input = document.getElementById('input-custom-prompt-value');
+    
+    document.getElementById('custom-prompt-title').textContent = title;
+    document.getElementById('custom-prompt-message').textContent = message;
+    input.value = defaultValue;
+    
+    const btnCancel = document.getElementById('btn-custom-prompt-cancel');
+    
+    const cleanup = (value) => {
+      dialog.close();
+      btnCancel.removeEventListener('click', onCancel);
+      form.removeEventListener('submit', onSubmit);
+      dialog.removeEventListener('cancel', onSystemCancel);
+      resolve(value);
+    };
+    
+    const onCancel = () => cleanup(null);
+    const onSubmit = (e) => {
+      e.preventDefault();
+      cleanup(input.value);
+    };
+    const onSystemCancel = (e) => {
+      e.preventDefault();
+      cleanup(null);
+    };
+    
+    btnCancel.addEventListener('click', onCancel);
+    form.addEventListener('submit', onSubmit);
+    dialog.addEventListener('cancel', onSystemCancel);
+    
+    dialog.showModal();
+  });
+}
+
 // Theme management
 function initTheme() {
   const savedTheme = localStorage.getItem('theme') || 'dark';
@@ -275,8 +359,8 @@ document.getElementById('btn-start-match').addEventListener('click', () => {
   showScreen('match-setup');
 });
 
-document.getElementById('btn-end-tournament').addEventListener('click', () => {
-  const ok = confirm("Are you sure you want to end this tournament session? All history for today will be cleared.");
+document.getElementById('btn-end-tournament').addEventListener('click', async () => {
+  const ok = await customConfirm("End Tournament", "Are you sure you want to end this tournament session? All history for today will be cleared.");
   if (!ok) return;
   
   localStorage.removeItem('turf_cricket_tournament');
@@ -473,7 +557,7 @@ function recordRuns(runsVal) {
 }
 
 // Handle Extras (Wide, No Ball, Bye, Leg Bye)
-function recordExtra(type) {
+async function recordExtra(type) {
   if (appMode === 'quick') {
     if (!quickMatch || quickMatch.status !== 'live') return;
     
@@ -506,9 +590,9 @@ function recordExtra(type) {
         announce("Byes/Leg-byes are disabled by custom rules.");
         return;
       }
-      const runString = prompt("Enter number of Byes/Leg Byes run:", "1");
+      const runString = await customPrompt("Record Extras", "Enter number of Byes/Leg Byes run:", "1");
       const runsRun = parseInt(runString, 10);
-      if (isNaN(runsRun) || runsRun < 0) return;
+      if (isNaN(runsRun) || runsRun < 0 || runString === null) return;
       
       saveHistory();
       quickMatch.runs += runsRun;
@@ -585,9 +669,9 @@ function recordExtra(type) {
     }
     
     // Prompt how many runs were run
-    const runString = prompt("Enter number of Byes/Leg Byes run:", "1");
+    const runString = await customPrompt("Record Extras", "Enter number of Byes/Leg Byes run:", "1");
     const runsRun = parseInt(runString, 10);
-    if (isNaN(runsRun) || runsRun < 0) return;
+    if (isNaN(runsRun) || runsRun < 0 || runString === null) return;
     
     saveHistory();
     innings.runs += runsRun;
@@ -858,7 +942,7 @@ function afterBallCheck(hasPromptedStateChange = false) {
     }
     
     // Handle standard Over End (and not in transition)
-    if (!transitionOccurred && quickMatch.balls > 0 && quickMatch.balls % 6 === 0 && quickMatch.overTimeline.length > 0) {
+    if (!transitionOccurred && countLegalBalls(quickMatch.overTimeline) === 6) {
       endQuickOver();
     }
     
@@ -903,13 +987,8 @@ function afterBallCheck(hasPromptedStateChange = false) {
   }
   
   // Handle standard Over End (and not in transition)
-  if (!transitionOccurred && !hasPromptedStateChange && innings.balls > 0 && innings.balls % 6 === 0) {
-    // If wide/no-ball re-bowl is enabled, innings.balls represents legal balls only.
-    // If not, we still trigger at 6 balls.
-    const lastOverIndex = innings.overTimeline.length;
-    if (innings.overTimeline.length > 0) {
-      endOver();
-    }
+  if (!transitionOccurred && !hasPromptedStateChange && countLegalBalls(innings.overTimeline) === 6) {
+    endOver();
   }
   
   saveState();
@@ -934,7 +1013,7 @@ function endQuickOver() {
   announce(`Over completed. Runs in over: ${runsInOver}`);
 }
 
-function endQuickFirstInnings() {
+async function endQuickFirstInnings() {
   if (!quickMatch) return;
   
   // Auto-archive last over if it was completed
@@ -943,7 +1022,10 @@ function endQuickFirstInnings() {
   }
   
   const target = quickMatch.runs + 1;
-  const ok = confirm(`Innings 1 Completed: ${quickMatch.runs}/${quickMatch.wickets} (${ballsToOvers(quickMatch.balls)} Overs).\nStart Innings 2? Target: ${target}`);
+  const ok = await customConfirm(
+    "Start 2nd Innings",
+    `First Innings ended: ${quickMatch.runs}/${quickMatch.wickets} in ${ballsToOvers(quickMatch.balls)} overs. Do you want to start the 2nd Innings? (Target: ${target} runs)`
+  );
   if (ok) {
     quickMatch.inningsType = 2;
     quickMatch.target = target;
@@ -1004,9 +1086,10 @@ function showQuickSummaryScreen(match) {
   
   document.getElementById('match-victory-banner').textContent = match.victoryMessage;
   
-  // Hide visual card preview since it relies on team names/player stats
-  document.querySelectorAll('.standard-mode-only').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.quick-mode-only').forEach(el => el.classList.remove('hidden'));
+  const performersBlock = document.querySelector('.card-performers');
+  if (performersBlock) {
+    performersBlock.style.display = 'none';
+  }
   
   if (match.inningsType === 2) {
     document.getElementById('summary-team-a-name').textContent = "1st Innings";
@@ -1014,12 +1097,36 @@ function showQuickSummaryScreen(match) {
     
     document.getElementById('summary-team-b-name').textContent = "2nd Innings";
     document.getElementById('summary-team-b-score').textContent = `${match.runs}/${match.wickets} (${ballsToOvers(match.balls)} Ovs)`;
+    
+    // Preview card updates
+    document.getElementById('card-match-title').textContent = "QUICK MATCH SCORECARD";
+    document.getElementById('card-victory-msg').textContent = match.victoryMessage;
+    
+    document.getElementById('card-team1-name').textContent = "1ST INNINGS";
+    document.getElementById('card-team1-runs').textContent = `${match.target - 1}`;
+    document.getElementById('card-team1-overs').textContent = `${match.overs}.0 Ovs`;
+    
+    document.getElementById('card-team2-name').textContent = "2ND INNINGS";
+    document.getElementById('card-team2-runs').textContent = `${match.runs}/${match.wickets}`;
+    document.getElementById('card-team2-overs').textContent = `${ballsToOvers(match.balls)} Ovs`;
   } else {
     document.getElementById('summary-team-a-name').textContent = "Batting Team";
     document.getElementById('summary-team-a-score').textContent = `${match.runs}/${match.wickets} (${ballsToOvers(match.balls)} Ovs)`;
     
     document.getElementById('summary-team-b-name').textContent = "-";
     document.getElementById('summary-team-b-score').textContent = "";
+    
+    // Preview card updates
+    document.getElementById('card-match-title').textContent = "QUICK MATCH SCORECARD";
+    document.getElementById('card-victory-msg').textContent = match.victoryMessage;
+    
+    document.getElementById('card-team1-name').textContent = "BATTING TEAM";
+    document.getElementById('card-team1-runs').textContent = `${match.runs}/${match.wickets}`;
+    document.getElementById('card-team1-overs').textContent = `${ballsToOvers(match.balls)} Ovs`;
+    
+    document.getElementById('card-team2-name').textContent = "-";
+    document.getElementById('card-team2-runs').textContent = "-";
+    document.getElementById('card-team2-overs').textContent = "";
   }
 }
 
@@ -1121,20 +1228,24 @@ function endMatch(forfeit = false, forfeitWinner = '') {
 }
 
 // Forfeit/End Match prematurely
-document.getElementById('btn-end-match-early').addEventListener('click', () => {
+document.getElementById('btn-end-match-early').addEventListener('click', async () => {
   if (appMode === 'quick') {
     if (!quickMatch) return;
-    const ok = confirm("Are you sure you want to end this match?");
+    const ok = await customConfirm("End Match", "Are you sure you want to end this match?");
     if (!ok) return;
     endQuickMatch();
     return;
   }
 
   if (!activeMatch) return;
-  const ok = confirm("Are you sure you want to end this match prematurely?");
+  const ok = await customConfirm("End Match", "Are you sure you want to end this match prematurely?");
   if (!ok) return;
   
-  const winner = prompt(`Select the winning team:\n1. ${activeMatch.teamA}\n2. ${activeMatch.teamB}\n3. Mark as Tie`, activeMatch.teamA);
+  const winner = await customPrompt(
+    "Select Winner", 
+    `Select the winning team:\nEnter 1 for ${activeMatch.teamA}, 2 for ${activeMatch.teamB}, or 3 for Tie`, 
+    activeMatch.teamA
+  );
   let winnerTeam = 'Tie';
   let forfeit = true;
   
@@ -1569,6 +1680,11 @@ function showSummaryScreen(match) {
   viewingMatch = match;
   showScreen('summary');
   
+  const performersBlock = document.querySelector('.card-performers');
+  if (performersBlock) {
+    performersBlock.style.display = 'block';
+  }
+  
   document.getElementById('match-victory-banner').textContent = match.victoryMessage;
   
   const inn1 = match.innings[0];
@@ -1785,10 +1901,7 @@ document.getElementById('btn-download-image').addEventListener('click', () => {
 });
 
 function downloadCardImage(match) {
-  const inn1 = match.innings[0];
-  const inn2 = match.innings[1];
-  
-  // Set up canvas sizing (ratio appropriate for social sharing)
+  // Set up canvas sizing
   const canvas = document.createElement('canvas');
   canvas.width = 600;
   canvas.height = 600;
@@ -1810,7 +1923,11 @@ function downloadCardImage(match) {
   // 2. Draw Logo/Header
   ctx.fillStyle = '#10b981'; // emerald-500
   ctx.font = 'bold 16px Outfit, sans-serif';
-  ctx.fillText('🏏 TURF CRICKET SCORECARD', 40, 50);
+  if (!match.innings) {
+    ctx.fillText('🏏 QUICK SCRICKET SCORECARD', 40, 50);
+  } else {
+    ctx.fillText('🏏 TURF CRICKET SCORECARD', 40, 50);
+  }
   
   // Session details
   ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
@@ -1820,7 +1937,11 @@ function downloadCardImage(match) {
   // 3. Draw Match Title
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 32px Outfit, sans-serif';
-  ctx.fillText(`${match.teamA.toUpperCase()} vs ${match.teamB.toUpperCase()}`, 40, 120);
+  if (!match.innings) {
+    ctx.fillText("QUICK MATCH COMPLETED", 40, 120);
+  } else {
+    ctx.fillText(`${match.teamA.toUpperCase()} vs ${match.teamB.toUpperCase()}`, 40, 120);
+  }
   
   // 4. Draw Victory/Result Banner
   ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
@@ -1837,82 +1958,163 @@ function downloadCardImage(match) {
   
   // 5. Draw Scores Box
   ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
-  ctx.fillRect(40, 220, 520, 140);
+  ctx.fillRect(40, 220, 520, 160);
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-  ctx.strokeRect(40, 220, 520, 140);
+  ctx.strokeRect(40, 220, 520, 160);
   
-  // Team 1 score column
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.font = 'bold 13px Outfit, sans-serif';
-  ctx.fillText(inn1.battingTeam.toUpperCase(), 70, 255);
+  if (!match.innings) {
+    // Quick Mode Drawing
+    if (match.inningsType === 2) {
+      // 1st Innings
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = 'bold 13px Outfit, sans-serif';
+      ctx.fillText("1ST INNINGS", 70, 260);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'extrabold 36px Outfit, sans-serif';
+      ctx.fillText(`${match.target - 1}`, 70, 310);
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '14px Outfit, sans-serif';
+      ctx.fillText(`Target: ${match.target}`, 70, 345);
+      
+      // VS
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.font = 'bold 20px Outfit, sans-serif';
+      ctx.fillText('VS', 285, 300);
+      
+      // 2nd Innings
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = 'bold 13px Outfit, sans-serif';
+      ctx.fillText("2ND INNINGS (CHASE)", 370, 260);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'extrabold 36px Outfit, sans-serif';
+      ctx.fillText(`${match.runs}/${match.wickets}`, 370, 310);
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '14px Outfit, sans-serif';
+      ctx.fillText(`${ballsToOvers(match.balls)} Overs`, 370, 345);
+    } else {
+      // 1 Innings Only
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = 'bold 13px Outfit, sans-serif';
+      ctx.fillText("BATTING TEAM", 70, 260);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'extrabold 36px Outfit, sans-serif';
+      ctx.fillText(`${match.runs}/${match.wickets}`, 70, 310);
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.font = '14px Outfit, sans-serif';
+      ctx.fillText(`${ballsToOvers(match.balls)} Overs`, 70, 345);
+    }
+  } else {
+    // Standard Mode Drawing
+    const inn1 = match.innings[0];
+    const inn2 = match.innings[1];
+    
+    // Team 1 score column
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = 'bold 13px Outfit, sans-serif';
+    ctx.fillText(inn1.battingTeam.toUpperCase(), 70, 255);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'extrabold 36px Outfit, sans-serif';
+    ctx.fillText(`${inn1.runs}/${inn1.wickets}`, 70, 300);
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '14px Outfit, sans-serif';
+    ctx.fillText(`${ballsToOvers(inn1.balls)} Overs`, 70, 330);
+    
+    // VS
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.font = 'bold 20px Outfit, sans-serif';
+    ctx.fillText('VS', 285, 290);
+    
+    // Team 2 score column
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = 'bold 13px Outfit, sans-serif';
+    ctx.fillText(inn2.battingTeam.toUpperCase(), 370, 255);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'extrabold 36px Outfit, sans-serif';
+    ctx.fillText(`${inn2.runs}/${inn2.wickets}`, 370, 300);
+    
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.font = '14px Outfit, sans-serif';
+    ctx.fillText(`${ballsToOvers(inn2.balls)} Overs`, 370, 330);
+  }
   
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'extrabold 36px Outfit, sans-serif';
-  ctx.fillText(`${inn1.runs}/${inn1.wickets}`, 70, 300);
-  
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.font = '14px Outfit, sans-serif';
-  ctx.fillText(`${ballsToOvers(inn1.balls)} Overs`, 70, 330);
-  
-  // VS
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-  ctx.font = 'bold 20px Outfit, sans-serif';
-  ctx.fillText('VS', 285, 290);
-  
-  // Team 2 score column
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.font = 'bold 13px Outfit, sans-serif';
-  ctx.fillText(inn2.battingTeam.toUpperCase(), 370, 255);
-  
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'extrabold 36px Outfit, sans-serif';
-  ctx.fillText(`${inn2.runs}/${inn2.wickets}`, 370, 300);
-  
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-  ctx.font = '14px Outfit, sans-serif';
-  ctx.fillText(`${ballsToOvers(inn2.balls)} Overs`, 370, 330);
-  
-  // 6. Top Performers Box
+  // 6. Extras / Top Performers Box
   ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
-  ctx.fillRect(40, 385, 520, 130);
-  ctx.strokeRect(40, 385, 520, 130);
+  ctx.fillRect(40, 400, 520, 120);
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+  ctx.strokeRect(40, 400, 520, 120);
   
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-  ctx.font = 'bold 12px Outfit, sans-serif';
-  ctx.fillText('TOP PERFORMERS TODAY', 60, 415);
-  
-  // Find top performers again
-  let bestBatText = '-';
-  let bestBatRuns = -1;
-  let bestBowlText = '-';
-  let bestBowlWickets = -1;
-  let bestBowlRuns = 999;
-  
-  match.innings.forEach(inn => {
-    Object.entries(inn.batters).forEach(([name, stats]) => {
-      if (stats.runs > bestBatRuns) {
-        bestBatRuns = stats.runs;
-        bestBatText = `${name}   ${stats.runs} runs off ${stats.balls} balls`;
-      }
+  if (match.innings) {
+    // Standard Mode Top Performers
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.font = 'bold 12px Outfit, sans-serif';
+    ctx.fillText('TOP PERFORMERS TODAY', 60, 425);
+    
+    let bestBatText = '-';
+    let bestBatRuns = -1;
+    let bestBowlText = '-';
+    let bestBowlWickets = -1;
+    let bestBowlRuns = 999;
+    
+    match.innings.forEach(inn => {
+      Object.entries(inn.batters).forEach(([name, stats]) => {
+        if (stats.runs > bestBatRuns) {
+          bestBatRuns = stats.runs;
+          bestBatText = `${name}   ${stats.runs} runs off ${stats.balls} balls`;
+        }
+      });
+      Object.entries(inn.bowlers).forEach(([name, stats]) => {
+        if (stats.wickets > bestBowlWickets || (stats.wickets === bestBowlWickets && stats.runs < bestBowlRuns)) {
+          bestBowlWickets = stats.wickets;
+          bestBowlRuns = stats.runs;
+          bestBowlText = `${name}   ${stats.wickets} wickets for ${stats.runs} runs (${ballsToOvers(stats.balls)} ov)`;
+        }
+      });
     });
-    Object.entries(inn.bowlers).forEach(([name, stats]) => {
-      if (stats.wickets > bestBowlWickets || (stats.wickets === bestBowlWickets && stats.runs < bestBowlRuns)) {
-        bestBowlWickets = stats.wickets;
-        bestBowlRuns = stats.runs;
-        bestBowlText = `${name}   ${stats.wickets} wickets for ${stats.runs} runs (${ballsToOvers(stats.balls)} ov)`;
-      }
-    });
-  });
-  
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 15px Outfit, sans-serif';
-  ctx.fillText('Batting:', 60, 448);
-  ctx.fillText('Bowling:', 60, 485);
-  
-  ctx.fillStyle = '#34d399';
-  ctx.font = '500 15px Outfit, sans-serif';
-  ctx.fillText(bestBatText, 140, 448);
-  ctx.fillText(bestBowlText, 140, 485);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 15px Outfit, sans-serif';
+    ctx.fillText('Batting:', 60, 458);
+    ctx.fillText('Bowling:', 60, 490);
+    
+    ctx.fillStyle = '#34d399';
+    ctx.font = '500 15px Outfit, sans-serif';
+    ctx.fillText(bestBatText, 140, 458);
+    ctx.fillText(bestBowlText, 140, 490);
+  } else {
+    // Quick Mode Extras Summary
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.font = 'bold 12px Outfit, sans-serif';
+    ctx.fillText('EXTRAS CONCEDED SUMMARY', 60, 425);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 15px Outfit, sans-serif';
+    ctx.fillText('Wides:', 60, 458);
+    ctx.fillText('No Balls:', 60, 490);
+    
+    ctx.fillStyle = '#34d399';
+    ctx.font = '500 15px Outfit, sans-serif';
+    ctx.fillText(`${match.extras.wide} runs`, 140, 458);
+    ctx.fillText(`${match.extras.noball} runs`, 140, 490);
+    
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 15px Outfit, sans-serif';
+    ctx.fillText('Byes:', 320, 458);
+    ctx.fillText('Leg Byes:', 320, 490);
+    
+    ctx.fillStyle = '#34d399';
+    ctx.font = '500 15px Outfit, sans-serif';
+    ctx.fillText(`${match.extras.bye} runs`, 410, 458);
+    ctx.fillText(`${match.extras.legbye} runs`, 410, 490);
+  }
   
   // Footer credit text
   ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
@@ -1925,7 +2127,8 @@ function downloadCardImage(match) {
   const dataUrl = canvas.toDataURL('image/png');
   const a = document.createElement('a');
   a.href = dataUrl;
-  a.download = `scorecard_${match.teamA}_vs_${match.teamB}.png`;
+  const matchName = match.innings ? `${match.teamA}_vs_${match.teamB}` : 'quick_match';
+  a.download = `scorecard_${matchName}.png`;
   a.click();
 }
 

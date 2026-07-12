@@ -109,9 +109,9 @@
               <div class="form-group">
                 <label for="noball-value">No Ball Run Value</label>
                 <select id="noball-value">
-                  <option value="1" selected>1 Run</option>
+                  <option value="1">1 Run</option>
                   <option value="2">2 Runs</option>
-                  <option value="0">0 Runs (No Runs)</option>
+                  <option value="0" selected>0 Runs (No Runs)</option>
                 </select>
               </div>
             </div>
@@ -126,7 +126,7 @@
                 <span>Re-bowl No Balls</span>
               </label>
               <label class="checkbox-label">
-                <input type="checkbox" id="byes-allowed" checked>
+                <input type="checkbox" id="byes-allowed">
                 <span>Allow Byes & Leg Byes</span>
               </label>
             </div>
@@ -187,9 +187,9 @@
               <div class="form-group">
                 <label for="quick-noball-value">No Ball Run Value</label>
                 <select id="quick-noball-value">
-                  <option value="1" selected>1 Run</option>
+                  <option value="1">1 Run</option>
                   <option value="2">2 Runs</option>
-                  <option value="0">0 Runs</option>
+                  <option value="0" selected>0 Runs</option>
                 </select>
               </div>
             </div>
@@ -204,7 +204,7 @@
                 <span>Re-bowl No Balls</span>
               </label>
               <label class="checkbox-label">
-                <input type="checkbox" id="quick-byes-allowed" checked>
+                <input type="checkbox" id="quick-byes-allowed">
                 <span>Allow Byes & Leg Byes</span>
               </label>
             </div>
@@ -498,8 +498,8 @@
             </div>
           </div>
 
-          <!-- Share card preview container (Standard Mode Only) -->
-          <section class="share-card-container standard-mode-only">
+          <!-- Share card preview container -->
+          <section class="share-card-container">
             <h3>Shareable Card Preview</h3>
             <div id="shareable-visual-card" class="visual-card-preview">
               <div class="card-logo">🏏 Turf Cricket</div>
@@ -546,7 +546,7 @@
             <button id="btn-copy-text" class="btn-secondary">
               📋 Copy Text Scorecard
             </button>
-            <button id="btn-download-image" class="btn-secondary standard-mode-only">
+            <button id="btn-download-image" class="btn-secondary">
               🖼️ Download Scorecard Image
             </button>
           </div>
@@ -668,6 +668,33 @@
       <div class="dialog-actions">
         <button type="button" id="btn-cancel-retire" class="btn-secondary">Cancel</button>
         <button type="submit" class="btn-primary">Confirm Retirement</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- DIALOG 5: Custom Confirm Dialog (To replace browser confirm popup) -->
+  <dialog id="dialog-custom-confirm" class="glass-dialog">
+    <form method="dialog" class="dialog-form">
+      <h3 id="custom-confirm-title">Confirm Action</h3>
+      <p id="custom-confirm-message" class="dialog-hint">Are you sure you want to proceed?</p>
+      <div class="dialog-actions">
+        <button type="button" id="btn-custom-confirm-cancel" class="btn-secondary">Cancel</button>
+        <button type="button" id="btn-custom-confirm-ok" class="btn-primary">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- DIALOG 6: Custom Prompt Dialog (To replace browser prompt popup) -->
+  <dialog id="dialog-custom-prompt" class="glass-dialog">
+    <form id="form-custom-prompt" class="dialog-form">
+      <h3 id="custom-prompt-title">Input Value</h3>
+      <p id="custom-prompt-message" class="dialog-hint">Please enter a value:</p>
+      <div class="form-group">
+        <input type="text" id="input-custom-prompt-value" required autocomplete="off">
+      </div>
+      <div class="dialog-actions">
+        <button type="button" id="btn-custom-prompt-cancel" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">Submit</button>
       </div>
     </form>
   </dialog>
